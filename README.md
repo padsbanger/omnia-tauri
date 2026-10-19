@@ -26,6 +26,18 @@ CI uploads finished installers only. Linux downloads are separate `omnia-Linux-d
 
 Release builds use size optimization, ThinLTO, one codegen unit and symbol stripping, following [Tauri's size guidance](https://v2.tauri.app/concept/size/) and [Cargo's profiles reference](https://doc.rust-lang.org/cargo/reference/profiles.html). Panic unwinding is preserved. Development builds retain their normal debugging configuration. Release compilation can take longer, and stripped release binaries provide less detailed crash symbols; for diagnostic builds override `CARGO_PROFILE_RELEASE_STRIP=none` and `CARGO_PROFILE_RELEASE_DEBUG=1` in the build environment. Local before/after measurements are in [bundle size evidence](docs/evidence/linux-bundle-size.json).
 
+## Release downloads
+
+Actions artifacts are temporary build downloads; release assets are uploaded separately with [GitHub CLI](https://cli.github.com/manual/gh_release_upload). After this workflow change is pushed, publishing a GitHub release whose tag includes it triggers verification and builds for all three platforms. A final job attaches DEB, RPM, AppImage, MSI, NSIS EXE and DMG installers to that existing release after every build and frontend check succeeds. It builds the tag's exact commit, validates that the tag (with optional `v` prefix) matches all three app version files, and grants write permission only to the upload job. Ordinary pushes, pull requests and verification-only manual runs never upload release assets.
+
+For an already-published release such as `0.11.0`, open **Actions → Verify and build → Run workflow**, select **main** (containing the updated workflow), and set **release_tag** to **0.11.0**. The workflow still builds the `0.11.0` tag, not main. Alternatively:
+
+```sh
+gh workflow run verify.yml --repo padsbanger/omnia-tauri --ref main -f release_tag=0.11.0
+```
+
+Leave `release_tag` empty for verification without uploading. A retry replaces assets with matching installer names (`--clobber`); it does not create/publish a release, move a tag, or change release notes. The repository's built-in `GITHUB_TOKEN` is sufficient; no personal access token is required. Release uploads are configured but must be exercised on GitHub to verify end-to-end delivery.
+
 ## Verify
 
 ```powershell

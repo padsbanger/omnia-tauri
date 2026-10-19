@@ -1,5 +1,13 @@
 # Progress record
 
+## Release asset automation — 2026-10-19
+
+User asked how to include build artifacts in release 0.11.0. Read-only GitHub check confirms the release exists at ef28f11 with no uploaded assets. Updated Verify and build: release:published trigger plus optional manual release_tag input; prepare resolves the tag to one immutable commit for all checks/builds, verifies an existing release and matching package/Tauri/Cargo versions. Final upload job requires successful frontend + all native jobs, downloads this run's artifacts and uploads only six installer formats with gh release upload --clobber. Only that job has contents:write; ordinary verification never uploads. No release creation, tag movement or note edits.
+
+Verified actionlint 1.7.12 (shellcheck/pyflakes unavailable and disabled), YAML/job structure and bash -n for every run script. Hermetic gh stub verifies blank/valid/v-prefixed tags, version mismatch/missing release/newline rejection, six installer extensions with spaces, evidence/ZIP exclusion and empty-selection rejection. No runtime code changed, so application builds/tests from the preceding change were not repeated. No push, workflow dispatch, release upload or release publication performed.
+
+Next: after pushing this workflow to main, use Actions → Verify and build → Run workflow on main with release_tag=0.11.0. Equivalent: gh workflow run verify.yml --repo padsbanger/omnia-tauri --ref main -f release_tag=0.11.0. This builds the original 0.11.0 tag, not current main. Future release tags must include the workflow change for automatic release:published execution. Actual GitHub upload remains unverified until that run completes; retry replaces matching installer assets.
+
 ## Bundle size reduction — 2026-10-19
 
 User requested smaller bundles after the 213 MiB GitHub Linux artifact. Workflow now uploads only finished installers, with separate Linux DEB/RPM/AppImage artifacts; excludes AppDir/staging trees on every OS. Cargo release profile uses opt-level=s, ThinLTO, codegen-units=1, strip=symbols; panic unwind and dev profile unchanged. No libraries or product features removed.
