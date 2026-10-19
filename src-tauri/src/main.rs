@@ -1,8 +1,12 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod api;
 mod auth;
+#[cfg(target_os = "linux")]
+mod autostart_linux;
 mod config;
 mod drawer_layer;
+#[cfg(target_os = "linux")]
+mod geometry_linux;
 mod layout;
 mod navigation_trace;
 mod permissions;
@@ -11,6 +15,8 @@ mod platform;
 mod profiles;
 mod runtime;
 mod security;
+#[cfg(all(target_os = "linux", debug_assertions))]
+mod smoke_linux;
 mod unread;
 mod workspace;
 
@@ -214,11 +220,25 @@ fn main() {
             if cfg!(debug_assertions) && std::env::var_os("OMNIA_SMOKE").is_some() {
                 shell = shell.additional_browser_args("--remote-debugging-port=9222");
             }
-            window.add_child(
+            let shell_view = window.add_child(
                 shell,
                 tauri::LogicalPosition::new(0., 0.),
                 tauri::LogicalSize::new(1200., 800.),
             )?;
+            #[cfg(target_os = "linux")]
+            geometry_linux::bounds(
+                &shell_view,
+                layout::Bounds {
+                    x: 0.,
+                    y: 0.,
+                    width: 1200.,
+                    height: 800.,
+                },
+            )?;
+            #[cfg(not(target_os = "linux"))]
+            let _ = shell_view;
+            #[cfg(all(target_os = "linux", debug_assertions))]
+            smoke_linux::start(app.handle())?;
             auth::dispatch_callbacks(app.handle(), std::env::args().collect());
             if std::env::args().any(|a| a == "--from-autostart")
                 && matches!(
@@ -237,6 +257,20 @@ fn main() {
                 }
                 if let tauri::WindowEvent::Resized(size) = e {
                     if let Some(shell) = handle.get_webview("shell") {
+                        #[cfg(target_os = "linux")]
+                        if let Ok(scale) = shell.window().scale_factor() {
+                            let size = size.to_logical::<f64>(scale);
+                            let _ = geometry_linux::bounds(
+                                &shell,
+                                layout::Bounds {
+                                    x: 0.,
+                                    y: 0.,
+                                    width: size.width,
+                                    height: size.height,
+                                },
+                            );
+                        }
+                        #[cfg(not(target_os = "linux"))]
                         let _ = shell.set_size(*size);
                     }
                 }

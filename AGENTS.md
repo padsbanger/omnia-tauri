@@ -172,3 +172,12 @@ Never state full parity, successful authentication, cross-platform support, nati
 Keep the migration requirements above. The local React shell and typed bridge are in `src/renderer`; Rust services in `src-tauri/src` own credentials, API requests, account-scoped profiles, native view lifecycle and permission boundaries. Never grant a route/popup the shell's capability. Tauri child views require the pinned `unstable` feature. Preserve reference attribution in LICENSE.
 
 Read `docs/progress.md` before resuming. Run lint, typecheck, one coverage run followed by CRAP, Rust tests/fmt/clippy, frontend build and native build for relevant changes. `npm run smoke` verifies real Windows WebView2 using deterministic OIDC/API and website fixtures. Do not describe Linux/macOS/provider behavior as verified unless its checklist has evidence. Reference checkout remains outside this repository and must not be modified.
+
+Linux continuation: `geometry_linux.rs` owns GTK child placement because the pinned
+Tauri Linux GtkBox path ignores Wry bounds. Linux cleanup journals are reaped at
+startup, before creating WebContexts. `autostart_linux.rs` respects XDG config;
+never use the dependency's hardcoded HOME path for isolated tests. Run
+`npm run smoke:linux` on a desktop with Secret Service, or the explicitly labelled
+Xvfb CI job. Its Unix control socket is debug-only, requires private isolated XDG
+storage, and must never become a remote capability or release feature. Preserve
+Windows smoke and evidence; distinguish Wayland, Xwayland and Xvfb results.

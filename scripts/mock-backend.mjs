@@ -33,7 +33,7 @@ export function mockBackend(origin) {
     }
     const id=decodeURIComponent(u.pathname.slice('/routes/'.length));const r=state.routes.find(r=>r.id===id);
     if(!r){json(res,{error:'not found'},404);return true;}
-    if(req.method==='PATCH'){Object.assign(r,JSON.parse(await body(req)));json(res,{route:r});return true;}
+    if(req.method==='PATCH'){if(state.failPatchId===id){json(res,{error:'fixture partial mutation failure'},503);return true;}Object.assign(r,JSON.parse(await body(req)));json(res,{route:r});return true;}
     if(req.method==='DELETE'){state.routes=state.routes.filter(r=>r.id!==id);res.writeHead(204).end();return true;}
     json(res,{error:'method'},405);return true;
   }

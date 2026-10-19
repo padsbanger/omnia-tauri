@@ -17,7 +17,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "crap": "crap-typescript --agent --threshold 8",
-    "smoke": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol --locked && node scripts/native-smoke.mjs"
+    "smoke": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol --locked && node scripts/native-smoke.mjs",
+    "smoke:linux": "npm run build && cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol --locked && node scripts/native-smoke-linux.mjs"
   },
   "dependencies": {
     "@heroui/react": "^3.0.1",

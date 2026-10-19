@@ -358,6 +358,22 @@ pub fn recover_epochs(root: &std::path::Path) -> std::result::Result<(), String>
     }
     persistence::write(&path, &remaining)
 }
+// tauri-runtime-wry 2.12.2 deliberately retains Linux WebContexts (and their
+// network processes) until app exit. Unlinking an open store races WebKit's
+// asynchronous writes. Rotate immediately, but reap Linux stores on next startup,
+// before creating any views. The journal survives interruption.
+pub fn cleanup_closed_profiles(root: &std::path::Path) -> std::result::Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        let _ = root;
+        Ok(())
+    }
+    #[cfg(not(target_os = "linux"))]
+    {
+        recover_cleanup(root)?;
+        recover_epochs(root)
+    }
+}
 #[tauri::command]
 pub async fn route_delete(
     webview: tauri::Webview,
@@ -379,7 +395,7 @@ pub async fn route_delete(
     }
     save(&rt)?;
     queue_cleanup(&rt, &route)?;
-    recover_cleanup(&rt.root)?;
+    cleanup_closed_profiles(&rt.root)?;
     Ok(rt.routes.clone())
 }
 #[tauri::command]
@@ -438,7 +454,7 @@ pub async fn auth_logout(
                 .ok_or("Session epoch exhausted")?;
         }
         save(&rt)?;
-        recover_epochs(&rt.root)?;
+        cleanup_closed_profiles(&rt.root)?;
         Ok(())
     })();
     rt.routes.clear();
@@ -453,6 +469,29 @@ pub async fn auth_logout(
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn linux_cleanup_waits_until_restart_and_preserves_other_profiles() {
+        let temp = tempfile::tempdir().unwrap();
+        let mut rt = Runtime::new(temp.path().into());
+        rt.owner = "alice".into();
+        let old = route();
+        let retired = profiles::directory(&rt.root, &rt.owner, &old.id, old.epoch);
+        let current = profiles::directory(&rt.root, &rt.owner, &old.id, old.epoch + 1);
+        let other = profiles::directory(&rt.root, &rt.owner, "other", 0);
+        for directory in [&retired, &current, &other] {
+            std::fs::create_dir_all(directory).unwrap();
+            std::fs::write(directory.join("identity"), "fixture").unwrap();
+        }
+        cleanup_epoch(&rt, &old).unwrap();
+        cleanup_closed_profiles(&rt.root).unwrap();
+        assert!(retired.exists());
+        recover_epochs(&rt.root).unwrap();
+        assert!(!retired.exists());
+        assert!(current.join("identity").exists());
+        assert!(other.join("identity").exists());
+        recover_epochs(&rt.root).unwrap(); // restart recovery is idempotent
+    }
     fn route() -> Route {
         Route {
             id: "stable-id".into(),

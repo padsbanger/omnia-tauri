@@ -207,6 +207,16 @@ impl Runtime {
             )
             .map_err(|e| e.to_string())?;
         crate::permissions::install(&view, route.url.clone(), route.icon == "gmail")?;
+        #[cfg(target_os = "linux")]
+        crate::geometry_linux::bounds(
+            &view,
+            Bounds {
+                x: 108.,
+                y: 100.,
+                width: 400.,
+                height: 400.,
+            },
+        )?;
         view.hide().map_err(|e| e.to_string())?;
         view.set_zoom(1.2_f64.powf(route.zoom_level))
             .map_err(|e| e.to_string())?;
@@ -284,6 +294,8 @@ pub async fn layout_views(
         }
     }
     if hide_for_drawer {
+        webview.set_focus().map_err(|e| e.to_string())?;
+        rt.drawer_open = true;
         return Ok(false);
     }
     let awake: Vec<_> = rt
@@ -305,6 +317,9 @@ pub async fn layout_views(
             .get(&p.route_id)
             .and_then(|label| app.get_webview(label))
         {
+            #[cfg(target_os = "linux")]
+            crate::geometry_linux::bounds(&v, p.bounds)?;
+            #[cfg(not(target_os = "linux"))]
             v.set_bounds(tauri::Rect {
                 position: tauri::LogicalPosition::new(p.bounds.x, p.bounds.y).into(),
                 size: tauri::LogicalSize::new(p.bounds.width, p.bounds.height).into(),
@@ -369,7 +384,7 @@ pub async fn route_action(
             rt.routes.iter_mut().find(|r| r.id == id).unwrap().epoch += 1;
             crate::workspace::save(&rt)?;
             crate::workspace::cleanup_epoch(&rt, &route)?;
-            crate::workspace::recover_epochs(&rt.root)?;
+            crate::workspace::cleanup_closed_profiles(&rt.root)?;
             rt.create(&app, &id)?;
         }
         Action::Restore => {

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 import { mockBackend } from './mock-backend.mjs';
+import { websiteFixture } from './website-fixture.mjs';
 
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
@@ -16,15 +17,7 @@ const backend=mockBackend('http://127.0.0.1:7890');
 backend.state.routes[0].icon='telegram';
 const fixture = createServer(async (req,res) => {
   if(await backend.handle(req,res)) return;
-  if(req.url==='/favicon.png'){res.writeHead(200,{'Content-Type':'image/png'});res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQ2kAAAAASUVORK5CYII=','base64'));return;}
-  if (req.url === '/redirect') { res.writeHead(302, {Location:'http://localhost:7890/forbidden'}).end(); return; }
-  res.writeHead(200, {'Content-Type':'text/html', 'X-Frame-Options':'DENY'});
-  res.end(`<!doctype html><title>Fixture</title><link rel="icon" href="/favicon.png"><h1>Omnia native fixture</h1><input aria-label="Identity"><button id="save">Save identity</button><button id="popup">Popup</button><p id="identity"></p><script>
-  const identity=document.querySelector('#identity'); identity.textContent=localStorage.getItem('identity')||'empty';
-  document.querySelector('#save').onclick=()=>{const v=document.querySelector('input').value;localStorage.setItem('identity',v);document.cookie='identity='+v+'; Max-Age=86400; SameSite=Lax; Path=/';identity.textContent=v;};
-  window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data==='auth-complete')document.body.dataset.auth='complete';});
-  document.querySelector('#popup').onclick=()=>{sessionStorage.setItem('auth_nonce','fixture-nonce');const popup=window.open('about:blank','fixture-popup','width=520,height=600');if(popup)setTimeout(()=>{popup.location.href='/popup';},100);};
-  </script>`);
+  websiteFixture(req, res);
 });
 await new Promise(r => fixture.listen(7890,'127.0.0.1',r));
 let app, shellBrowser, routeBrowsers=[];

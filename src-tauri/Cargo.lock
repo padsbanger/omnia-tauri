@@ -2649,7 +2649,9 @@ name = "omnia-tauri"
 version = "0.11.0"
 dependencies = [
  "base64 0.22.1",
+ "gtk",
  "hex",
+ "javascriptcore-rs",
  "keyring",
  "open",
  "rand 0.8.8",
@@ -2664,6 +2666,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "url",
+ "webkit2gtk",
  "webview2-com",
  "windows",
 ]

@@ -1,6 +1,7 @@
 use crate::{persistence, runtime::Native, security};
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
+#[cfg(not(target_os = "linux"))]
 use tauri_plugin_autostart::ManagerExt;
 #[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
@@ -58,12 +59,28 @@ pub async fn set_startup(
         return Err("Autostart is unavailable in development builds".into());
     }
     let rt = state.0.lock().await;
-    let manager = app.autolaunch();
-    match mode {
-        Startup::No => manager.disable(),
-        _ => manager.enable(),
+    #[cfg(target_os = "linux")]
+    {
+        let executable = app
+            .env()
+            .appimage
+            .map(std::path::PathBuf::from)
+            .unwrap_or(std::env::current_exe().map_err(|e| e.to_string())?);
+        crate::autostart_linux::set(
+            &app.path().config_dir().map_err(|e| e.to_string())?,
+            &executable,
+            !matches!(mode, Startup::No),
+        )?;
     }
-    .map_err(|e| e.to_string())?;
+    #[cfg(not(target_os = "linux"))]
+    {
+        let manager = app.autolaunch();
+        match mode {
+            Startup::No => manager.disable(),
+            _ => manager.enable(),
+        }
+        .map_err(|e| e.to_string())?;
+    }
     let s = Settings {
         startup_open_mode: mode,
         ..Settings::default()
@@ -94,7 +111,7 @@ pub fn badge(app: &tauri::AppHandle, count: u32) {
     }
     #[cfg(not(target_os = "windows"))]
     {
-        let _ = window.set_badge_count(Some(i64::from(count)));
+        let _ = window.set_badge_count((count > 0).then_some(i64::from(count)));
     }
 }
 #[cfg(any(target_os = "windows", test))]
