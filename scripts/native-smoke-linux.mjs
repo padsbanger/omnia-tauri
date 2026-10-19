@@ -47,6 +47,8 @@ const evidence = {
     session: process.env.XDG_SESSION_TYPE,
     desktop: process.env.XDG_CURRENT_DESKTOP,
     requestedBackend: process.env.GDK_BACKEND ?? "default",
+    webkitDisableDmabufRenderer:
+      process.env.WEBKIT_DISABLE_DMABUF_RENDERER ?? null,
     displayDescription:
       process.env.OMNIA_SMOKE_DISPLAY ?? "existing desktop session",
   },
@@ -99,7 +101,7 @@ await new Promise((resolve, reject) => {
   fixture.once("error", reject);
   fixture.listen(7890, "127.0.0.1", resolve);
 });
-let app, stopped, appEnv, privateBus;
+let app, stopped, appEnv, privateBus, mainExit;
 function control(request) {
   return new Promise((resolve, reject) => {
     const socket = createConnection(join(directory, "control.sock"));
@@ -164,12 +166,14 @@ async function launch(args = [], environment = {}) {
     env: appEnv,
     stdio: ["ignore", "pipe", "pipe"],
   });
+  mainExit = null;
+  app.once("exit", (code, signal) => {
+    mainExit = { code, signal };
+  });
   app.stderr.on("data", (b) => {
     process.stderr.write(b);
     for (const line of b.toString().split("\n")) {
-      if (
-        /free\(\):|corrupted.*chunks|Segmentation fault|malloc\(\):/.test(line)
-      ) {
+      if (/free\(\):|corrupted|Segmentation fault|malloc\(\):/.test(line)) {
         evidence.runtimeDiagnostics.push(line.slice(0, 200));
       }
     }
@@ -190,13 +194,16 @@ async function stop() {
   if (!app) return;
   await control({ op: "exit" }).catch(() => {});
   const result = await Promise.race([stopped, delay(8000).then(() => null)]);
+  let terminationRequested = false;
   if (!result) {
-    app.kill("SIGTERM");
+    terminationRequested = app.kill("SIGTERM");
     await stopped;
   }
   app = null;
   await delay(500);
-  evidence.exits.push(result ?? { forcedTermination: true });
+  evidence.exits.push(
+    result ?? { stdioTimeout: true, terminationRequested, mainExit },
+  );
   assert.deepEqual(
     result,
     { code: 0, signal: null },
