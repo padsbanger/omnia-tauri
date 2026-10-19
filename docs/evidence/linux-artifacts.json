@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "9b3f56a6a8748a99b6ac3eff98d3641783af3f72",
+  "platform": "Linux x86_64 / Omarchy 4.0.4",
+  "command": "PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build",
+  "status": "pass",
+  "installed": false,
+  "packageLaunchVerified": false,
+  "artifacts": [
+    {
+      "path": "src-tauri/target/release/omnia-tauri",
+      "bytes": 25396128,
+      "sha256": "c32ba7afdfde0aa5d0057461d1492959710253e31e2fd38d28c6ae3adbb6523d"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.0_amd64.AppImage",
+      "bytes": 107985400,
+      "sha256": "b84b896261708fdb562f24516fd3587b07d20819e47aa9c24350f830b34867fd"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/deb/Omnia Tauri_0.11.0_amd64.deb",
+      "bytes": 8164412,
+      "sha256": "47357cce8bbd1837bbc0e78ca7cacd2706d171f1ca7df190e59ca871472adb37"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/rpm/Omnia Tauri-0.11.0-1.x86_64.rpm",
+      "bytes": 8168633,
+      "sha256": "a9e2e057adf0ed0d6442636657d3abeb724e3f1b11e082eb74943c1b8d0f06eb"
+    }
+  ],
+  "developmentLaunch": {
+    "status": "pass",
+    "command": "npm start -- --no-watch",
+    "nativeShell": {
+      "bridge": true,
+      "ready": true,
+      "url": "http://127.0.0.1:1420/"
+    },
+    "isolatedStorage": "/tmp/omnia-dev-HBozPU"
+  },
+  "releaseTestTransport": "OMNIA_SMOKE_CONTROL and test socket strings absent from release executable",
+  "appImageRuntimeQuery": "--appimage-version succeeded: type2-runtime 8f39b89; application launch and FUSE remain unverified"
+}

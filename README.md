@@ -1,8 +1,8 @@
-﻿# Omnia Tauri
+# Omnia Tauri
 
 Omnia hosts third-party websites in independent persistent native webviews. This repository ports the React interface from [padsbanger/omnia](https://github.com/padsbanger/omnia/tree/4c76ff5bd8d574448ec2c99d890373a64059c287) v0.11.0 to Tauri 2 and Rust. It is not an API replacement for those websites.
 
-Windows is the locally verified platform. Linux and macOS build jobs are provided but have not been run here. This is a runnable migration with explicit remaining provider/platform gaps, not a claim of full Electron/Castlabs parity. See [parity](docs/parity.md) and [platform support](docs/platform-support.md).
+Windows and Linux have separate native fixture evidence. Linux was exercised on Hyprland Wayland and its Xwayland server; macOS remains unverified. This is a runnable migration with explicit remaining provider/platform gaps, not a claim of full Electron/Castlabs parity. See [parity](docs/parity.md) and [platform support](docs/platform-support.md).
 
 ## Run
 
@@ -90,3 +90,39 @@ App identity is `com.strielok.omnia.tauri`. On Windows the data root is `%LOCALA
 - Server mutations are not queued offline. A partially completed reorder is reported and reconciled on reconnect.
 - Locked profile cleanup stays in an internal journal and is retried on restart. Never manually copy Electron profile directories into this app.
 - Real provider login, media hardware, Spotify playback and cross-platform native smoke tests require the [provider checklist](docs/platform-support.md). Opening a provider page does not verify those features.
+
+## Linux development and verification
+
+Use the existing project, with Node 24+ and Rust 1.98+. The Linux work was run on Omarchy/Arch with Node 26.8.1, Rust 1.98.1, GTK 3.24.52 and WebKitGTK 2.52.6. The native smoke helper requires WebKitGTK ≥2.40. On Arch, the corresponding build packages are `webkit2gtk-4.1 gtk3 base-devel openssl dbus librsvg libxdo patchelf`; install distro prerequisites from the [official guide](https://v2.tauri.app/start/prerequisites/) as needed. Debian/Ubuntu prerequisites are in `.github/workflows/verify.yml`.
+
+```sh
+npm ci
+npm start
+npm run lint
+npm run typecheck
+npm run test:coverage
+npm run crap
+npm run native:check
+npm run native:test
+npm run native:lint
+npm run smoke:linux
+npm run native:build
+```
+
+On this host, the strict default-renderer smoke run completes its 22 functional checks but fails during WebKit/NVIDIA subprocess shutdown. Treat clean shutdown as an open platform issue; details and reproducible evidence are in [verification](docs/verification.md). The explicit rendering workaround below passed the same native suite including clean exits:
+
+```sh
+WEBKIT_DISABLE_DMABUF_RENDERER=1 npm start
+WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run smoke:linux
+```
+
+This bypasses WebKit's faster DMABUF rendering path; the application does not enable it automatically. It is a tested option on this host, not a universal fix or a performance claim.
+
+Close any other Omnia Tauri process before smoke testing. `smoke:linux` builds an embedded-assets debug executable and drives the actual native WebKitGTK shell/child views on the available display. It requires a session D-Bus, an unlocked Secret Service and free fixture port 7890. It creates private temporary XDG data/config/cache storage and a fixture-specific keyring namespace, removes fixture credentials on logout, and writes `reports/native-linux.json`. It never changes your real autostart or protocol registration. The Windows command remains `npm run smoke`.
+
+To select the existing X11 server explicitly, run `GDK_BACKEND=x11 npm run smoke:linux`; under Hyprland that is Xwayland, not a standalone Xorg session. Keep the actual backend and monitor scales with evidence. The CI smoke job uses Xvfb and a disposable D-Bus/keyring session; CI configuration is not local evidence.
+
+Linux routes are native WebKitGTK views placed by `geometry_linux.rs`; drawers hide route widgets while the trusted shell handles management. Clearing a session immediately rotates its profile; physical removal waits for next-startup recovery because this Tauri version retains Linux WebContexts. See [platform findings](docs/platform-support.md) and [verification](docs/verification.md) for tested scope, artifact results and remaining limitations.
+
+
+Linux artifacts are `src-tauri/target/release/omnia-tauri` and DEB/RPM/AppImage files in `src-tauri/target/release/bundle/`. All three bundles were produced locally; none was installed or verified as an installed application. The host lacks a system `patchelf`; this run used an isolated extracted copy via `PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build`. For a persistent build environment, provide `patchelf` on PATH. [Artifact hashes and launch scope](docs/evidence/linux-artifacts.json).

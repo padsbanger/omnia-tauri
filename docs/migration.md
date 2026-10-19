@@ -23,9 +23,9 @@ Callbacks arrive through native command-line/single-instance handling on Windows
 ## Intentional behavior changes
 
 - Tokens and workspace caches moved out of renderer localStorage; corrupt/locked state is reported explicitly.
-- Native webviews hide before a drawer appears in the trusted shell. The original drawer components/style remain; the Electron floating child drawer window does not.
+- Linux/macOS native webviews hide before a drawer appears in the trusted shell; Windows composites live views underneath. Original drawer components/style remain; the Electron floating child drawer window does not.
 - Hostname suffixes now require a label boundary. Unsafe executable/file/custom schemes are rejected.
-- Memory reads show unavailable. No total-process number is mislabeled as per-route memory.
+- Memory displays were removed at user request. No total-process number is mislabeled as per-route memory.
 - Windows media/notification permission requests validate request and embedder origins. Linux/macOS permissions currently deny with a visible unavailable notice pending engine-specific adapters.
 - No forced autoplay, Chromium WebAuthn-disabling flags or Castlabs DRM distribution. Provider compatibility is a separate verification requirement.
 - Offline mutations are not queued. Create/rename/delete require the backend. Local reorder remains local when offline; partial online reorder failures are displayed and a reconnect reconciles server order.
@@ -42,3 +42,13 @@ Callbacks arrive through native command-line/single-instance handling on Windows
 5. Back up any wanted old data before removing Electron. This project performs no old-profile deletion, registry cleanup or automatic account migration.
 
 No release was published, no Git push/deploy was performed, and no user login settings were changed by verification.
+
+## Linux continuation
+
+Linux uses the same separate application identity and account/backend/client-scoped profile hashes. No installed Electron files, protocol association or login settings are changed. WebKitGTK cannot consume the old Chromium profile: website re-login is required.
+
+On Linux, clear/logout immediately retires the route's session epoch, and deletion closes its route/popups. Physical deletion is journaled until the next application startup because the pinned Tauri runtime keeps WebKit contexts/network processes alive. Recovery runs before any native views are created. A hibernated view preserves its profile and may retain its WebKit network process; there is no promised memory saving.
+
+The Linux autostart entry is `com.strielok.omnia.tauri.desktop` under the XDG configuration directory's `autostart/`. It is distinct from Electron and honors `XDG_CONFIG_HOME`. Development builds still refuse changes through the settings command. Verification enables/disables entries only in private temporary configuration directories. No installed-login or compositor-autostart behavior is implied by an entry-file test.
+
+The original intentional-changes bullets above describe the migration baseline: memory displays have since been removed at user request; Windows now composites live drawers while Linux/macOS retain hide/show. Linux's native GTK geometry adapter changes the container, not the retained React design or service/session identity.

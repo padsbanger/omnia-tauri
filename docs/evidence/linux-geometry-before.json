@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-19T18:10:33.703Z",
+  "sourceCommit": "393b7123f9239628cb22da630bc6793d7f9e7250",
+  "referenceCommit": "4c76ff5bd8d574448ec2c99d890373a64059c287",
+  "method": "Debug-only private Unix socket; native WebKitGTK evaluation and GTK measurements",
+  "environment": {
+    "distro": "NAME=\"Omarchy\"\nPRETTY_NAME=\"Omarchy\"\nID=omarchy\nID_LIKE=arch\nBUILD_ID=\"4.0.4\"\nVERSION_ID=\"4.0.4\"\nANSI_COLOR=\"38;2;158;206;106\"\nHOME_URL=\"https://omarchy.org/\"\nDOCUMENTATION_URL=\"https://learn.omacom.io/2/the-omarchy-manual\"\nSUPPORT_URL=\"https://discord.gg/tXFUdasqhY\"\nBUG_REPORT_URL=\"https://github.com/basecamp/omarchy/issues\"\nLOGO=omarchy\n",
+    "kernel": "Linux omarchy 7.2.5-3-omarchy #1 SMP PREEMPT_DYNAMIC Mon, 14 Sep 2026 19:55:01 +0000 x86_64 GNU/Linux",
+    "node": "v26.8.1",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01) (Arch Linux rust 1:1.98.1-1)",
+    "gtk": "3.24.52",
+    "webkit": "2.52.6",
+    "session": "wayland",
+    "desktop": "Hyprland",
+    "requestedBackend": "wayland",
+    "scale": 2,
+    "actualDisplayBackend": "GdkWaylandDisplay"
+  },
+  "checks": [
+    {
+      "name": "Isolated XDG autostart enable/disable entry",
+      "status": "pass",
+      "startup": {
+        "disabled": true,
+        "enabled": true,
+        "entry": "[Desktop Entry]\nType=Application\nVersion=1.0\nName=Omnia Tauri\nExec=\"/home/strielok/Projects/omnia-tauri/src-tauri/target/debug/omnia-tauri\" --from-autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
+      }
+    },
+    {
+      "name": "Same-origin native views: distinct cookies, localStorage, WebContexts and data managers",
+      "status": "pass",
+      "a": {
+        "context": "0x5cdaee13fd70",
+        "directory": "/tmp/omnia-linux-su4f7l/data/com.strielok.omnia.tauri/development/smoke/profiles/781c7b53fa24fb23b6977befaa30497d5b5eeb9dbb51540c4879cf5f2f75e13a/0",
+        "displayBackend": "GdkWaylandDisplay",
+        "focus": false,
+        "height": 271,
+        "manager": "0x5cdaedaf3da0",
+        "mapped": true,
+        "playingAudio": false,
+        "scale": 2,
+        "visible": true,
+        "width": 749,
+        "x": 0,
+        "y": 272,
+        "zoom": 1
+      },
+      "b": {
+        "context": "0x5cdaef38c080",
+        "directory": "/tmp/omnia-linux-su4f7l/data/com.strielok.omnia.tauri/development/smoke/profiles/2b57fcb47ab2c8ea9d093e12894795e3cd32da2c9d9ef9af45d2d5ad7cdea92e/0",
+        "displayBackend": "GdkWaylandDisplay",
+        "focus": false,
+        "height": 271,
+        "manager": "0x5cdaef384140",
+        "mapped": true,
+        "playingAudio": false,
+        "scale": 2,
+        "visible": true,
+        "width": 749,
+        "x": 0,
+        "y": 543,
+        "zoom": 1
+      }
+    }
+  ],
+  "status": "fail",
+  "failure": {
+    "expected": "All native assertions pass",
+    "observed": "Expected values to be strictly equal:\n\n749 !== 450\n",
+    "stack": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n749 !== 450\n\n    at file:///home/strielok/Projects/omnia-tauri/scripts/native-smoke-linux.mjs:58:142\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+  },
+  "finished": "2026-10-19T18:10:36.545Z",
+  "testStorage": "/tmp/omnia-linux-su4f7l"
+}

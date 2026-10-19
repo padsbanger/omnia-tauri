@@ -6,6 +6,26 @@ Status meanings: **implemented-and-tested** means the stated scope has actual lo
 
 Evidence references: `npm run test:coverage` exercises the TypeScript/domain/UI suite; `npm run native:test` exercises native logic; `npm run smoke` builds and drives actual Windows WebView2 views with deterministic HTTP/OIDC fixtures. [Native report](evidence/native-windows.json), [phase-1 report](evidence/phase1-windows.json), [verification record](verification.md), and [platform/provider checklist](platform-support.md) distinguish these scopes. Browser fixture mocks replace only external servers, not the native browser runtime.
 
+## Linux continuation scope
+
+Native evidence: [Wayland](evidence/native-linux.json), [Xwayland](evidence/native-linux-xwayland.json). The Linux table supersedes the historical Linux statuses in the original Windows migration matrix below. Source paths and source-behavior audit remain unchanged.
+
+| Behavior / replacement | Linux status | Evidence and limits |
+| --- | --- | --- |
+| Native lifecycle/layout, `runtime.rs`, `geometry_linux.rs` | **implemented-and-tested** | Real GTK allocations for single/spread/matrix; same labels survive hide/show; hibernate destroys/recreates; refresh/native zoom verified. Shell drawers hide route widgets and restore them. Live backdrop remains **unsupported**. |
+| Per-route profiles and popups, `profiles.rs`, `runtime.rs` | **implemented-and-tested** | Two identical HTTP origins with X-Frame-Options DENY, separate WebContexts/data managers/directories, independent cookies/localStorage across process restart; popup opener/sessionStorage/postMessage and identity inheritance. |
+| Clear/delete/logout and recovery, `workspace.rs` | **implemented-and-tested** | Clear rotates epoch without touching B; deleted view disappears; retired profile deletion recovered at restart. WebKit network processes may remain until app exit. |
+| Authority/navigation/hints, `security.rs`, `runtime.rs` | **implemented-and-tested** | Route/popup management rejection, invalid hint payloads, allowed localhost hints/favicon, unread priority, disallowed hostname redirect. Delayed stale title callbacks remain **implemented-unverified**; generation checks remain in code. |
+| OIDC, vault, API/cache, `auth.rs`, `api.rs`, `workspace.rs` | **implemented-and-tested** for synthetic fixture | PKCE, Secret Service persistence/read/refresh, exact state/path, cold callback, single-instance replay, cancellation; CRUD, partial failure without replay, outage recovery and invalid-session rejection. Separate private D-Bus verifies explicit missing-vault errors. Real Authentik remains **implemented-unverified**. |
+| Retained React workflows | **implemented-and-tested** for tested scope | Native DOM actions open/close drawers and select layouts; 115 frontend tests. Real pointer dragging/reordering on Linux remains **implemented-unverified**. |
+| Autostart, `autostart_linux.rs` | **implemented-and-tested** for isolated entry enable/disable | Atomic XDG desktop entry with startup argument; no real login settings changed. Actual desktop login and minimized startup **implemented-unverified**. |
+| Native process shutdown | **blocked** for a clean default-runtime pass | Default Wayland and Xwayland runs show WebKit subprocess heap aborts during exit, including NVIDIA EGL cleanup frames. The explicit DMABUF-disabled comparison passes all checks and exits; default-runtime gap remains. See verification/core evidence. |
+| Media and notification permission adapter | **blocked** | Native WebKitGTK permission objects lack requester origin/frame. Denial retained; settings reports unavailable. Notification delivery/click behavior unverified. |
+| Unread OS integration, audio/background | **implemented-unverified** for OS output | Native/sidebar hints and hidden timers tested. Tao launcher badges require Unity-compatible desktop/libunity; Hyprland visual badges and audible/hardware output not verified. |
+| Spotify DRM and per-route memory | **unsupported** for Castlabs parity / memory metric | Secure fixture exposes no EME API on this installed engine. Codec negotiation is not playback; real Spotify remains unverified. No memory figures or performance claims. |
+
+## Original migration matrix (Windows baseline)
+
 | Behavior and source | Tauri replacement | Platform and status | Verification / remaining work |
 | --- | --- | --- | --- |
 | Branding, dark gradients, particles, icons, HeroUI forms: `src/renderer/components/`, styles/assets, `DESIGN.md` | Retained components and stylesheet; `src/renderer/components`, `src/assets`, `src/index.css` | Windows **implemented-and-tested**; Linux/macOS **implemented-unverified** | UI tests and real native drawer/create/rename flows. No redesign or iframe workspace. |

@@ -1,0 +1,82 @@
+{
+  "implementationCommit": "ec3ad04",
+  "referenceCommit": "4c76ff5bd8d574448ec2c99d890373a64059c287",
+  "frontend": {
+    "tests": 115,
+    "statements": 92.92,
+    "branches": 88.23,
+    "functions": 89.61,
+    "lines": 93.81,
+    "crapThreshold": 8,
+    "crapStatus": "pass",
+    "ambiguousMappings": 4
+  },
+  "rust": {
+    "tests": 24,
+    "check": "pass",
+    "fmt": "pass",
+    "clippy": "pass"
+  },
+  "commands": [
+    {
+      "command": "npm ci",
+      "status": "pass"
+    },
+    {
+      "command": "npm run lint",
+      "status": "pass"
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "pass"
+    },
+    {
+      "command": "npm run test:coverage -- --maxWorkers=2",
+      "status": "pass"
+    },
+    {
+      "command": "npm run crap",
+      "status": "pass"
+    },
+    {
+      "command": "npm run build",
+      "status": "pass"
+    },
+    {
+      "command": "npm run native:check",
+      "status": "pass"
+    },
+    {
+      "command": "npm run native:test",
+      "status": "pass"
+    },
+    {
+      "command": "npm run native:lint",
+      "status": "pass"
+    },
+    {
+      "command": "npm start -- --no-watch",
+      "status": "native sign-in shell rendered in isolated test storage"
+    },
+    {
+      "command": "GDK_BACKEND=wayland npm run smoke:linux",
+      "status": "FAIL: functional assertions pass; WebKit/NVIDIA subprocess shutdown abort"
+    },
+    {
+      "command": "WEBKIT_DISABLE_DMABUF_RENDERER=1 GDK_BACKEND=wayland npm run smoke:linux",
+      "status": "PASS: 22 checks, five clean exits, no fatal diagnostics"
+    },
+    {
+      "command": "PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build",
+      "status": "PASS: ELF, DEB, RPM, AppImage"
+    }
+  ],
+  "notRun": [
+    "Windows/macOS builds on this host",
+    "edited CI job",
+    "real provider/production Authentik sign-in",
+    "Spotify protected playback",
+    "package installation/application launch",
+    "real autostart/protocol registration"
+  ]
+}

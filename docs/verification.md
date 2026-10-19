@@ -1,6 +1,6 @@
 # Verification record
 
-Executed locally on 2026-10-19: Windows 11 build 26200 x64, WebView2 155.0.4283.62, Node 24.15, npm 11.12, Rust 1.98 MSVC. Reference commit: 4c76ff5bd8d574448ec2c99d890373a64059c287. Linux/macOS CI definitions are provided, but neither their builds nor native behavior ran here.
+Historical Windows verification on 2026-10-19: Windows 11 build 26200 x64, WebView2 155.0.4283.62, Node 24.15, npm 11.12, Rust 1.98 MSVC. Reference commit: 4c76ff5bd8d574448ec2c99d890373a64059c287. At that Windows baseline, Linux/macOS CI definitions existed but had not run. The later Linux continuation and its default-renderer shutdown failure are recorded below.
 
 Initial migration baseline (the Gmail follow-up is recorded below):
 
@@ -95,3 +95,45 @@ Executed successfully: lint, typecheck, coverage (111 frontend tests, 92.90% sta
 The trusted shell disables Tauri's native file-drop handler, which otherwise intercepts HTML drag-and-drop on Windows. A shared hook supports sidebar items and management-card grips with before/after markers and Alt+Up/Down. Full-order validation and a shared saving state prevent malformed or overlapping reorders. Active selection and route view generations remain unchanged. Offline order stays local; partial server failures retain the existing explicit warning.
 
 Executed successfully: lint, typecheck/frontend build, coverage (115 tests; 92.92% statements, 88.23% branches), CRAP 8 with the same four mapping warnings, Rust fmt/clippy and 22 tests. Windows native build returned exit 0 (executable/MSI/NSIS; hashes refreshed). Full native smoke returned exit 0 with 32 checks. [Evidence](evidence/windows-route-reordering.json) verifies actual drag gestures in both lists, backend PATCH ordering, unchanged selection/view identity, and order surviving a full native restart. The same run verifies the updated 50% live drawer backdrop. Unit tests also cover keyboard movement, cancellation, external drops, insertion direction, invalid orders and overlapping-save prevention. Linux/macOS native dragging remains unverified. Two WebView2 invalid-window PostMessage diagnostics appeared during final fixture shutdown after all checks passed; the driver exited successfully.
+
+## Linux continuation — 2026-10-19
+
+Starting target HEAD: `393b7123f9239628cb22da630bc6793d7f9e7250`, a descendant of `f3fc07d`; the initial tree was clean. Current upstream source was fetched into read-only `../omnia-reference-linux` and is unchanged at `4c76ff5bd8d574448ec2c99d890373a64059c287`. Linux implementation commit: `a8ddbea` (full hash in native evidence). This work retains all historical Windows evidence; no Windows/macOS native rerun is claimed.
+
+Host: Omarchy 4.0.4 x86_64, kernel 7.2.5-3-omarchy, Node 26.8.1/npm 11.19.0, Rust 1.98.1, GTK 3.24.52 and WebKitGTK 2.52.6. Session D-Bus/default Secret Service is unlocked. Hyprland initially reported scale 1; during native testing it reported 1.25, with native GTK integer buffer scale 2 on Wayland and 1 on Xwayland. Per-run monitor/backend/scale is in the JSON; no mixed-monitor test or compositor-setting change was performed.
+
+Executed successfully:
+
+- `npm ci` (zero audited vulnerabilities at that run), `npm run lint`, `npm run typecheck`, `npm run build`.
+- `npm run test:coverage -- --maxWorkers=2`: 115 tests; 92.92% statements, 88.23% branches, 89.61% functions, 93.81% lines. Two initial runs exceeded the old five-second limit in different full HeroUI workflows under compile load. The test budget is now fifteen seconds; assertions and coverage scope are unchanged.
+- `npm run crap`: threshold 8 passes using that coverage. Four existing ambiguous mappings remain: handleRouteZoom, replaceRoutes, updateRoute and setUser. This is not complete function-mapping coverage.
+- `npm run native:check`, `npm run native:test`: 24 tests, including XDG autostart and Linux deferred cleanup/recovery; `cargo fmt --manifest-path src-tauri/Cargo.toml --check` and `npm run native:lint` (clippy warnings denied).
+- Embedded debug build: `cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol --locked`.
+- `GDK_BACKEND=wayland npm run smoke:linux`: all 22 functional assertions pass, but final strict run exits **1** on WebKit subprocess shutdown failure. [Exact-commit evidence](evidence/native-linux.json). Earlier runs with the less strict shutdown driver returned 0; they do not establish a clean default-runtime result.
+- X11 backend through this Hyprland desktop's **Xwayland** server: separate [evidence](evidence/native-linux-xwayland.json). This is not Xvfb or a pure Xorg login session.
+
+The driver measures actual GTK allocations, context/data-manager identities, profile paths, visibility and zoom. Both same-origin fixture pages send `X-Frame-Options: DENY`. It evaluates scripts in Tauri's actual WebKitGTK views and invokes production command boundaries; it does not launch Playwright WebKit. React actions are native DOM-driven, not hardware mouse/keyboard gestures. An unavailable Secret Service is tested using a separate private D-Bus without service activation, leaving the real keyring running and unlocked.
+
+The first real run failed geometry (requested width 450, allocated 749; vertical stacking); see [pre-fix failure](evidence/linux-geometry-before.json). After the GTK container adapter, native bounds and lifecycle tests pass. Linux profile cleanup now waits until restart because the pinned runtime intentionally retains WebContexts. An intermediate driver failure looked for a nonexistent generic Close button; corrected it to the retained `Close manage routes` accessible label. All subsequent assertions were rerun.
+
+Native media probe in a secure loopback context: H.264 and VP9 `canPlayType` report `probably`; `navigator.requestMediaKeySystemAccess` is undefined. This establishes neither protected playback nor audible output. Camera/microphone/notification origin APIs remain inadequate for safe grants. Real accounts, hardware output, OS badge/notification visuals, installed protocol association, real login startup/minimization and delayed stale title callbacks remain unverified. CI now includes an explicitly labelled disposable Xvfb/keyring smoke job; that edited CI job has not run here.
+
+### Shutdown diagnostic and bundling follow-up
+
+One later Xwayland run completed every scenario assertion but emitted `free(): corrupted unsorted chunks` while stopping a fixture process. `coredumpctl info 46525` identifies **WebKitWebProcess**, WebKitGTK 2.52.6, SIGABRT at libc `exit`/allocator cleanup; the Rust main process did not crash. Other threads were in JavaScriptCore and Mesa waits. Memory was available and no OOM event was found. A temporary extracted core was deleted after GDB inspection; internal frames remain unresolved. The exact corruption source is unknown, so no engine workaround or upstream fix is claimed. [Failure evidence](evidence/linux-xwayland-shutdown-failure.json) distinguishes the passing assertions from the unsuccessful native shutdown. Prior clean Xwayland evidence does not negate this intermittent failure.
+
+The driver now waits for process/stdio closure, requires main exit code zero, captures fatal allocator diagnostics and fails the overall report if any occur. Implementation follow-up commit `9b3f56a` also adds a square bundle icon. The source `icon.png` was 591×595; the first AppImage bundler panicked with “couldn't find a square icon”. `npx tauri icon src-tauri/icons/icon.png --fit contain --png 512 --output /tmp/omnia-bundle-icons` generated `src-tauri/icons/512x512.png`, with transparent padding and unchanged branding. Existing Windows icon files remain untouched.
+
+
+The strict Wayland run also failed shutdown (WebKitWebProcess PID 53515, `corrupted double-linked list`). This is **not confined to Xwayland**. Its core stack goes through `libnvidia-eglcore.so.580.178.04` and `libEGL_nvidia.so.0` on the path to libc exit. This host has Intel UHD 620 plus NVIDIA MX150, and an inherited `__GLX_VENDOR_LIBRARY_NAME=nvidia`. Driver cleanup is implicated; the exact write causing corruption is not identified. Default-renderer clean shutdown remains a blocker. No desktop/GPU configuration was changed.
+
+Final native build: `PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build` returned **0**, producing release ELF, DEB, RPM and AppImage. Patchelf 0.19.1 was extracted from the host's configured distribution package into a temporary tool directory because it was not installed; future builds need `patchelf` on PATH. Artifact paths, sizes and SHA-256 hashes: [linux-artifacts.json](evidence/linux-artifacts.json). DEB declares `libwebkit2gtk-4.1-0` and `libgtk-3-0`; these Arch-built bundles are not validated for older glibc distributions. No installer or package was installed. AppImage application launch/FUSE behavior remains unverified (runtime version query alone is not an app launch).
+
+`npm start -- --no-watch` was run with private XDG storage and fixture namespace: real native shell rendered Sign in at `http://127.0.0.1:1420/` with its native bridge. The owned dev process/Vite were stopped afterward. Release inspection found no Linux test-socket/control strings; production contains no smoke transport. The Windows driver still uses the same website fixture contents; it cannot be executed on this Linux host.
+
+
+### Explicit renderer comparison
+
+`WEBKIT_DISABLE_DMABUF_RENDERER=1 GDK_BACKEND=wayland node scripts/native-smoke-linux.mjs` returns **0**: 22 checks, five clean process/stdio closures, no fatal diagnostics. [Evidence](evidence/native-linux-dmabuf-disabled.json) records the option, backend and scales. The comparison follows [Tauri's graphics guidance](https://v2.tauri.app/develop/debug/linux-graphics/). It does not establish a permanent fix for an intermittent NVIDIA/WebKit problem; default-renderer failure evidence is retained. No automatic app-wide override, driver change or security/sandbox bypass was introduced.
+
+The complete reproducible command `WEBKIT_DISABLE_DMABUF_RENDERER=1 GDK_BACKEND=wayland npm run smoke:linux` was then run against `ec3ad04` and also returned **0**, rebuilding frontend/embedded debug assets and passing 22 checks with five clean exits and zero fatal diagnostics. The saved explicit-renderer evidence is this latest run. This second comparison does not erase the default-renderer failure or claim long-term stability.

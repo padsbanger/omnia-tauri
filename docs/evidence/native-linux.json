@@ -1,0 +1,238 @@
+{
+  "date": "2026-10-19T18:24:25.443Z",
+  "sourceCommit": "9b3f56a6a8748a99b6ac3eff98d3641783af3f72",
+  "referenceCommit": "4c76ff5bd8d574448ec2c99d890373a64059c287",
+  "method": "Debug-only private Unix socket; native WebKitGTK evaluation and GTK measurements",
+  "environment": {
+    "distro": "NAME=\"Omarchy\"\nPRETTY_NAME=\"Omarchy\"\nID=omarchy\nID_LIKE=arch\nBUILD_ID=\"4.0.4\"\nVERSION_ID=\"4.0.4\"\nANSI_COLOR=\"38;2;158;206;106\"\nHOME_URL=\"https://omarchy.org/\"\nDOCUMENTATION_URL=\"https://learn.omacom.io/2/the-omarchy-manual\"\nSUPPORT_URL=\"https://discord.gg/tXFUdasqhY\"\nBUG_REPORT_URL=\"https://github.com/basecamp/omarchy/issues\"\nLOGO=omarchy\n",
+    "kernel": "Linux omarchy 7.2.5-3-omarchy #1 SMP PREEMPT_DYNAMIC Mon, 14 Sep 2026 19:55:01 +0000 x86_64 GNU/Linux",
+    "node": "v26.8.1",
+    "rust": "rustc 1.98.1 (48a229cea 2026-09-01) (Arch Linux rust 1:1.98.1-1)",
+    "gtk": "3.24.52",
+    "webkit": "2.52.6",
+    "session": "wayland",
+    "desktop": "Hyprland",
+    "requestedBackend": "wayland",
+    "displayDescription": "existing desktop session",
+    "monitors": [
+      {
+        "name": "eDP-1",
+        "width": 1920,
+        "height": 1080,
+        "scale": 1.25
+      }
+    ],
+    "scale": 2,
+    "actualDisplayBackend": "GdkWaylandDisplay"
+  },
+  "checks": [
+    {
+      "name": "Isolated XDG autostart enable/disable entry",
+      "status": "pass",
+      "startup": {
+        "disabled": true,
+        "enabled": true,
+        "entry": "[Desktop Entry]\nType=Application\nVersion=1.0\nName=Omnia Tauri\nExec=\"/home/strielok/Projects/omnia-tauri/src-tauri/target/debug/omnia-tauri\" --from-autostart\nTerminal=false\nX-GNOME-Autostart-enabled=true\n"
+      }
+    },
+    {
+      "name": "Same-origin native views: distinct cookies, localStorage, WebContexts and data managers",
+      "status": "pass",
+      "a": {
+        "context": "0x637d92c47880",
+        "directory": "/tmp/omnia-linux-8H5OBv/data/com.strielok.omnia.tauri/development/smoke/profiles/781c7b53fa24fb23b6977befaa30497d5b5eeb9dbb51540c4879cf5f2f75e13a/0",
+        "displayBackend": "GdkWaylandDisplay",
+        "focus": false,
+        "height": 500,
+        "heightRequest": 500,
+        "manager": "0x637d9325a540",
+        "mapped": true,
+        "playingAudio": false,
+        "scale": 2,
+        "visible": true,
+        "width": 450,
+        "widthRequest": 450,
+        "x": 108,
+        "y": 120,
+        "zoom": 1
+      },
+      "b": {
+        "context": "0x637d93b528c0",
+        "directory": "/tmp/omnia-linux-8H5OBv/data/com.strielok.omnia.tauri/development/smoke/profiles/2b57fcb47ab2c8ea9d093e12894795e3cd32da2c9d9ef9af45d2d5ad7cdea92e/0",
+        "displayBackend": "GdkWaylandDisplay",
+        "focus": false,
+        "height": 500,
+        "heightRequest": 500,
+        "manager": "0x637d93b42f30",
+        "mapped": true,
+        "playingAudio": false,
+        "scale": 2,
+        "visible": true,
+        "width": 450,
+        "widthRequest": 450,
+        "x": 558,
+        "y": 120,
+        "zoom": 1
+      }
+    },
+    {
+      "name": "Single/spread/matrix bounds, hidden views retain timers, drawer hide/show and focus",
+      "status": "pass"
+    },
+    {
+      "name": "Refresh and source-equivalent native zoom",
+      "status": "pass"
+    },
+    {
+      "name": "Remote authority denied, invalid payloads denied; narrow localhost unread priority and favicon",
+      "status": "pass"
+    },
+    {
+      "name": "Native popup inherits profile/opener/sessionStorage and cannot manage routes",
+      "status": "pass"
+    },
+    {
+      "name": "Native HTTP redirect to disallowed hostname intercepted without external launch",
+      "status": "pass"
+    },
+    {
+      "name": "Hibernate destroys view/popups; new generation retains session",
+      "status": "pass"
+    },
+    {
+      "name": "Full process restart preserves isolated cookies and localStorage",
+      "status": "pass"
+    },
+    {
+      "name": "Targeted async clear rotates profile and cannot reopen old session; B retained",
+      "status": "pass"
+    },
+    {
+      "name": "Mock native OIDC PKCE and Secret Service persistence",
+      "status": "pass"
+    },
+    {
+      "name": "Retained React drawer and three layout controls synchronize native visibility via real WebKit DOM actions",
+      "status": "pass"
+    },
+    {
+      "name": "Cold-start OS credential read and refresh",
+      "status": "pass"
+    },
+    {
+      "name": "Real native API CRUD and deletion closes native resources",
+      "status": "pass"
+    },
+    {
+      "name": "Partial server mutation is surfaced and not blindly replayed; reconnect reconciles",
+      "status": "pass"
+    },
+    {
+      "name": "Offline cache and bounded recovery; mutations rejected without queue",
+      "status": "pass"
+    },
+    {
+      "name": "Invalid authentication closes views; logout removes native session",
+      "status": "pass"
+    },
+    {
+      "name": "Pending Linux profile deletion is recovered before views on restart",
+      "status": "pass"
+    },
+    {
+      "name": "Native cold callback, exact URI/state rejection, single-instance replay denial and serialized token reuse",
+      "status": "pass"
+    },
+    {
+      "name": "Cancellation removes pending OS credential and rejects late callback",
+      "status": "pass"
+    },
+    {
+      "name": "Raw fixture tokens absent from frontend storage",
+      "status": "pass"
+    },
+    {
+      "name": "Missing Secret Service produces explicit read/save errors without plaintext fallback",
+      "status": "pass",
+      "observed": "OS credential store is locked or unavailable"
+    }
+  ],
+  "exits": [
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "code": 0,
+      "signal": null
+    },
+    {
+      "forcedTermination": true
+    }
+  ],
+  "runtimeDiagnostics": [],
+  "remaining": [
+    {
+      "name": "Real providers, production Authentik and Spotify protected playback",
+      "status": "unverified"
+    },
+    {
+      "name": "Camera/microphone/website notifications",
+      "status": "blocked",
+      "reason": "Pinned WebKitGTK permission requests lack requesting frame/origin; denial retained"
+    },
+    {
+      "name": "Audible hardware output, OS notification clicks and visual launcher badges",
+      "status": "unverified"
+    },
+    {
+      "name": "Installed protocol association, login-session startup/minimization, pure Xorg and mixed-monitor DPI",
+      "status": "unverified"
+    },
+    {
+      "name": "Hardware pointer drag gestures and delayed stale title callbacks after destruction",
+      "status": "unverified"
+    },
+    {
+      "name": "Per-route process memory and Castlabs DRM parity",
+      "status": "unsupported"
+    }
+  ],
+  "mediaProbe": {
+    "com.microsoft.playready.recommendation": "TypeError",
+    "com.widevine.alpha": "TypeError",
+    "eme": "undefined",
+    "h264": "probably",
+    "secureContext": true,
+    "vp9": "probably"
+  },
+  "status": "fail",
+  "failure": {
+    "expected": "Clean native shutdown",
+    "observed": "Native app must exit cleanly\n+ actual - expected\n\n+ null\n- {\n-   code: 0,\n-   signal: null\n- }\n"
+  },
+  "finished": "2026-10-19T18:25:05.228Z",
+  "testStorage": "/tmp/omnia-linux-8H5OBv",
+  "crash": {
+    "pid": 53515,
+    "executable": "/usr/lib/webkit2gtk-4.1/WebKitWebProcess",
+    "signal": "SIGABRT",
+    "diagnostic": "corrupted double-linked list",
+    "phase": "final shutdown",
+    "frames": [
+      "libc allocator abort",
+      "libnvidia-eglcore.so.580.178.04",
+      "libEGL_nvidia.so.0",
+      "libc exit"
+    ],
+    "cause": "GPU-driver cleanup implicated by stack; exact corruption source unresolved"
+  }
+}

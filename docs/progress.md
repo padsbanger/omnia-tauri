@@ -1,5 +1,23 @@
 # Progress record
 
+## Current Linux status — 2026-10-19
+
+Implemented and committed locally: a8ddbea (GTK geometry/focus, deferred profile cleanup, XDG autostart, native driver), 9b3f56a (square bundle icon/strict exit checks), ec3ad04 (renderer/exit diagnostics). Original target HEAD 393b712 was clean and descends from f3fc07d. Read-only ../omnia-reference-linux is current upstream main 4c76ff5bd8d574448ec2c99d890373a64059c287, unchanged product baseline.
+
+Host: Omarchy 4.0.4 x86_64, kernel 7.2.5, Hyprland Wayland + Xwayland; GTK 3.24.52/WebKitGTK 2.52.6; Node 26.8.1/npm 11.19, Rust 1.98.1. Monitor changed from scale 1 at initial inspection to 1.25 during testing; actual GTK scale/backend is in each report. Secret Service default collection unlocked. No desktop settings changed.
+
+Completed: real isolated profiles/popup opener, restart persistence, native layout/drawers, zoom/refresh, hibernate/restore/clear/delete/recovery, command denial, hints, OIDC/PKCE/vault refresh/callback/replay/cancel, API CRUD/partial errors/offline recovery, missing-keyring errors and isolated autostart entry tests. Debug-only private Unix transport; no remote capability or production test server. Windows driver preserved using shared fixture.
+
+Checks: npm ci/lint/typecheck/build pass; 115 frontend tests, coverage 92.92% statements/88.23% branches; CRAP 8 passes with four existing mapping warnings. Initial five-second UI workflow timeouts resolved by 15-second test budget without coverage/assertion changes. Rust check/fmt/clippy and 24 tests pass. Isolated npm start -- --no-watch renders native sign-in. Native release build passes, producing ELF/DEB/RPM/AppImage; hashes in docs/evidence/linux-artifacts.json. Bundles not installed or application-launched. Private patchelf at /tmp/omnia-build-tools/usr/bin was used; future native builds need patchelf on PATH.
+
+Important blocker: default-renderer native suite has 22 passing functional assertions but intermittent WebKit subprocess heap aborts during exit on BOTH Wayland and Xwayland. Wayland core includes NVIDIA EGL 580.178.04 cleanup; exact cause unresolved. docs/evidence/native-linux.json is a FAILURE report. Two explicit WEBKIT_DISABLE_DMABUF_RENDERER=1 runs pass all 22 checks and five clean exits each (including the complete npm run smoke:linux command); separately recorded in native-linux-dmabuf-disabled.json. Never relabel it as a default-runtime pass. No automatic renderer override or security/sandbox bypass.
+
+Run: npm start; on this affected graphics stack try WEBKIT_DISABLE_DMABUF_RENDERER=1 npm start. Reproduce native checks with npm run smoke:linux and the explicitly prefixed alternative. Build: npm run native:build (or PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build on this host). No push, installer, protocol registration, real autostart change, production account use or reference modification.
+
+Next: reduce NVIDIA/WebKit shutdown reproducer and compare engine/driver versions before upstream reporting; actual provider/Authentik/Spotify and hardware/OS visual checks; pure Xorg/macOS/mixed-monitor tests; run edited CI (not yet run). Media/notification grants remain blocked by absent native requesting-origin/frame APIs. Actual login/minimized startup, OS notifications/badges, pointer drag gestures and delayed stale callbacks remain unverified. Per-route memory and Castlabs parity unavailable.
+
+## Historical Windows migration record
+
 Reference: padsbanger/omnia main at 4c76ff5bd8d574448ec2c99d890373a64059c287 (0.11.0), fetched 2026-10-19 into read-only ../omnia-reference-tauri. Matches supplied HEAD. Target origin/Git identity and original AGENTS instructions preserved. MIT license retained.
 
 Host: Windows 11 26200 x64, Rust 1.98 MSVC, Node 24.15, npm 11.12, WebView2 155. Use npm.cmd because PowerShell blocks npm.ps1.
