@@ -3,6 +3,7 @@ mod api;
 mod auth;
 mod config;
 mod layout;
+mod navigation_trace;
 mod permissions;
 mod persistence;
 mod platform;
@@ -71,7 +72,11 @@ async fn spike_seed(
             label: (*id).into(),
             icon: "link".into(),
             url: "http://127.0.0.1:7890/".into(),
-            internal_hosts: vec!["127.0.0.1".into()],
+            internal_hosts: {
+                let mut hosts = workspace::hosts("gmail", "https://mail.google.com");
+                hosts.push("127.0.0.1".into());
+                hosts
+            },
             is_hibernated: false,
             zoom_level: 0.,
             epoch: 0,

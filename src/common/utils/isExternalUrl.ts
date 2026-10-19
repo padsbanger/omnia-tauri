@@ -1,3 +1,6 @@
+import isGoogleOAuthPopupUrl from "./isGoogleOAuthPopupUrl";
+import isGoogleAccountUrl from "./isGoogleAccountUrl";
+
 function matchesHostname(hostname: string, allowedHost: string): boolean {
   return hostname === allowedHost || hostname.endsWith(`.${allowedHost}`);
 }
@@ -8,6 +11,14 @@ function isInternalHostname(
 ): boolean {
   return internalHosts.some((allowedHost) =>
     matchesHostname(hostname, allowedHost.toLowerCase()),
+  );
+}
+
+function isInternalUrl(url: URL, internalHosts: string[]): boolean {
+  return (
+    isInternalHostname(url.hostname.toLowerCase(), internalHosts) ||
+    (isGoogleAccountUrl(url) &&
+      isInternalHostname("accounts.google.com", internalHosts))
   );
 }
 
@@ -38,7 +49,7 @@ function getWrappedExternalTarget(
       if (["http:", "https:", "mailto:", "tel:"].includes(targetUrl.protocol)) {
         if (
           ["mailto:", "tel:"].includes(targetUrl.protocol) ||
-          !isInternalHostname(targetUrl.hostname.toLowerCase(), internalHosts)
+          !isInternalUrl(targetUrl, internalHosts)
         ) {
           return targetUrl.toString();
         }
@@ -66,10 +77,11 @@ export function getExternalUrlTarget(
       return null;
     }
 
-    const hostname = parsed.hostname.toLowerCase();
-    if (!isInternalHostname(hostname, internalHosts)) {
+    if (!isInternalUrl(parsed, internalHosts)) {
       return parsed.toString();
     }
+
+    if (isGoogleOAuthPopupUrl(url)) return null;
 
     return getWrappedExternalTarget(parsed, internalHosts);
   } catch {

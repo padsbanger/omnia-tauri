@@ -1,12 +1,15 @@
 import { chromium } from 'playwright';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 import { mockBackend } from './mock-backend.mjs';
 
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
+const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
+if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app before native smoke testing; its single-instance handler must not receive fixture commands.');
 const evidence = { platform: process.platform, started: new Date().toISOString(), checks: [] };
 const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
 const backend=mockBackend('http://127.0.0.1:7890');
@@ -18,7 +21,8 @@ const fixture = createServer(async (req,res) => {
   res.end(`<!doctype html><title>Fixture</title><link rel="icon" href="/favicon.png"><h1>Omnia native fixture</h1><input aria-label="Identity"><button id="save">Save identity</button><button id="popup">Popup</button><p id="identity"></p><script>
   const identity=document.querySelector('#identity'); identity.textContent=localStorage.getItem('identity')||'empty';
   document.querySelector('#save').onclick=()=>{const v=document.querySelector('input').value;localStorage.setItem('identity',v);document.cookie='identity='+v+'; Max-Age=86400; SameSite=Lax; Path=/';identity.textContent=v;};
-  document.querySelector('#popup').onclick=()=>window.open('/popup','fixture-popup','width=520,height=600');
+  window.addEventListener('message',event=>{if(event.origin===location.origin&&event.data==='auth-complete')document.body.dataset.auth='complete';});
+  document.querySelector('#popup').onclick=()=>{sessionStorage.setItem('auth_nonce','fixture-nonce');const popup=window.open('about:blank','fixture-popup','width=520,height=600');if(popup)setTimeout(()=>{popup.location.href='/popup';},100);};
   </script>`);
 });
 await new Promise(r => fixture.listen(7890,'127.0.0.1',r));
@@ -80,12 +84,48 @@ try {
   const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
   const popup=popupBrowser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/popup'));
   assert.ok(popup,'Popup target must exist');await popup.waitForSelector('#identity');assert.equal(await popup.locator('#identity').textContent(),'Alice');
-  assert.equal(await popup.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);await popup.close();check('Popup shares originating profile and denies privileged command');
+  assert.equal(await popup.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);
+  assert.equal(await popup.evaluate(()=>sessionStorage.getItem('auth_nonce')),'fixture-nonce');
+  assert.equal(await popup.evaluate(()=>!!window.opener),true);await popup.evaluate(()=>window.opener.postMessage('auth-complete',location.origin));
+  await a.waitForFunction(()=>document.body.dataset.auth==='complete');assert.ok(!a.url().includes('/popup'));assert.equal(await b.evaluate(()=>localStorage.getItem('identity')),'Bob');
+  await popup.close();check('Auth popup preserves opener/postMessage and profile without replacing the waiting route; privileged commands denied');
   await action(shell,'fixture-a','hibernate');await action(shell,'fixture-a','restore');await layout(shell);
   [a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'Alice');check('Hibernate destroys view; restore retains session');
   await stop();shell=await launch();await invoke(shell,'spike_seed');await layout(shell);[a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'Alice');assert.equal(await b.locator('#identity').textContent(),'Bob');check('Full application restart retains both isolated identities');
   const cleared=await action(shell,'fixture-a','clear_session');portA=9223+cleared.epoch*2;await layout(shell);[a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'empty');assert.equal(await b.locator('#identity').textContent(),'Bob');check('Targeted clear resets only profile A');
   await a.evaluate(()=>location.href='/redirect');await delay(700);assert.ok(!a.url().includes('/forbidden'));check('Redirect to disallowed hostname intercepted');
+  const trace=await readFile(join(process.env.LOCALAPPDATA,'com.strielok.omnia.tauri','development','smoke','diagnostics','navigation.jsonl'),'utf8');
+  const navigationEvents=trace.trim().split('\n').map(line=>JSON.parse(line)).filter(event=>event.timeMs>=Date.parse(evidence.started));
+  assert.ok(navigationEvents.some(event=>event.event==='popup_created'));
+  assert.ok(navigationEvents.some(event=>event.event==='external_target'&&event.destination.host==='localhost'));
+  assert.ok(navigationEvents.every(event=>!('query' in event.destination)&&!('fragment' in event.destination)));
+  check('Native callbacks record popup creation and external handoff in redacted local trace');
+  // Intercept HTTPS fixture responses in the real WebView2 views. No Google
+  // requests leave these synthetic profiles; native navigation policy still runs.
+  const inbox='https://mail.google.com/mail/u/0/';
+  const regionalHosts=['accounts.google.pl','accounts.google.co.uk','accounts.google.de'];
+  const regionalHops=[];
+  for(const host of [...regionalHosts].reverse()) regionalHops.unshift('https://'+host+'/accounts/SetSID?continue='+encodeURIComponent(regionalHops[0]||inbox));
+  const sessionHop='https://accounts.youtube.com/accounts/SetSID?continue='+encodeURIComponent(regionalHops[0]);
+  const login='https://mail.google.com/mail/?continue='+encodeURIComponent(sessionHop);
+  const googleFixture=async route=>{
+    const url=new URL(route.request().url());
+    if(url.href===login) return route.fulfill({status:200,contentType:'text/html',headers:{'set-cookie':'native_fixture_auth=Alice; Secure; SameSite=Lax; Path=/'},body:`<!doctype html><script>location.replace(${JSON.stringify(sessionHop)})</script>`});
+    const hopIndex=[sessionHop,...regionalHops].indexOf(url.href);
+    if(hopIndex>=0) return route.fulfill({status:200,contentType:'text/html',body:`<!doctype html><script>location.replace(${JSON.stringify([...regionalHops,inbox][hopIndex])})</script>`});
+    if(url.href===inbox) return route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><p id="auth-result"></p><script>document.querySelector("#auth-result").textContent=document.cookie.includes("native_fixture_auth=Alice")?"Alice":"empty";</script>'});
+    return route.abort();
+  };
+  await a.route('https://**/*',googleFixture);await b.route('https://**/*',googleFixture);
+  const handoffStarted=Date.now();
+  await a.goto(login,{timeout:10000});await a.waitForURL(inbox,{timeout:10000});
+  assert.equal(await a.locator('#auth-result').textContent(),'Alice');
+  await b.goto(inbox,{timeout:10000});assert.equal(await b.locator('#auth-result').textContent(),'empty');
+  const handoffTrace=(await readFile(join(process.env.LOCALAPPDATA,'com.strielok.omnia.tauri','development','smoke','diagnostics','navigation.jsonl'),'utf8')).trim().split('\n').map(line=>JSON.parse(line)).filter(event=>event.timeMs>=handoffStarted);
+  assert.ok(handoffTrace.some(event=>event.event==='navigation_allowed'&&event.destination.host==='accounts.youtube.com'));
+  for(const host of regionalHosts) assert.ok(handoffTrace.some(event=>event.event==='navigation_allowed'&&event.destination.host===host));
+  assert.ok(!handoffTrace.some(event=>event.event==='external_target'||event.event==='popup_requested'));
+  check('Gmail continuation through YouTube and Polish, UK and German account hosts completes in the originating native profile without browser handoff; duplicate profile stays signed out');
   await mkdir('reports',{recursive:true});await shell.screenshot({path:'reports/native-shell.png'});
   await stop();portA=9223;shell=await launch();
   await invoke(shell,'auth_logout');await shell.reload();

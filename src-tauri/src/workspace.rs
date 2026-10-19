@@ -91,7 +91,7 @@ struct NavigationRule {
     #[serde(default)]
     exact_hosts: Vec<String>,
 }
-fn hosts(icon: &str, url: &str) -> Vec<String> {
+pub(crate) fn hosts(icon: &str, url: &str) -> Vec<String> {
     let rules: Vec<NavigationRule> = serde_json::from_str(include_str!("navigation-rules.json"))
         .expect("Static navigation rules");
     let host = url::Url::parse(url)

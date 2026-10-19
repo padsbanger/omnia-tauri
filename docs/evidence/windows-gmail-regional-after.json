@@ -1,0 +1,172 @@
+{
+  "platform": "win32",
+  "started": "2026-10-19T16:45:06.386Z",
+  "checks": [
+    {
+      "name": "Two same-origin native profiles have independent localStorage and cookies"
+    },
+    {
+      "name": "Measured native bounds follow logical-to-physical DPI conversion",
+      "scale": 1,
+      "views": [
+        {
+          "height": 600,
+          "id": "fixture-b",
+          "label": "route-2b57fcb47ab2c8ea9d093e12-2",
+          "visible": true,
+          "width": 500,
+          "x": 608,
+          "y": 120
+        },
+        {
+          "height": 600,
+          "id": "fixture-a",
+          "label": "route-781c7b53fa24fb23b6977bef-1",
+          "visible": true,
+          "width": 500,
+          "x": 108,
+          "y": 120
+        }
+      ]
+    },
+    {
+      "name": "Untrusted route denied privileged route action"
+    },
+    {
+      "name": "Native favicon discovery and malformed hint rejection"
+    },
+    {
+      "name": "Native title unread signal",
+      "unreadCounts": [
+        {
+          "routeId": "fixture-a",
+          "count": 7,
+          "source": "title"
+        },
+        {
+          "routeId": "fixture-b",
+          "count": 0,
+          "source": "title"
+        }
+      ],
+      "total": 7,
+      "revision": 3
+    },
+    {
+      "name": "Single/spread/matrix positioning, hide/show, drawer occlusion, focus commands"
+    },
+    {
+      "name": "Refresh and Electron-equivalent zoom scale"
+    },
+    {
+      "name": "Auth popup preserves opener/postMessage and profile without replacing the waiting route; privileged commands denied"
+    },
+    {
+      "name": "Hibernate destroys view; restore retains session"
+    },
+    {
+      "name": "Full application restart retains both isolated identities"
+    },
+    {
+      "name": "Targeted clear resets only profile A"
+    },
+    {
+      "name": "Redirect to disallowed hostname intercepted"
+    },
+    {
+      "name": "Native callbacks record popup creation and external handoff in redacted local trace"
+    },
+    {
+      "name": "Gmail continuation through YouTube and Polish, UK and German account hosts completes in the originating native profile without browser handoff; duplicate profile stays signed out"
+    },
+    {
+      "name": "Sign-in cancellation interrupts in-flight discovery without waiting for its timeout"
+    },
+    {
+      "name": "Native OIDC PKCE exchange, OS credential storage and production route-list contract against local fixture"
+    },
+    {
+      "name": "Retained React drawer, rename/PATCH, hibernation and all three layout controls operate on native views"
+    },
+    {
+      "name": "Create/POST metadata and delete/204 through retained UI"
+    },
+    {
+      "name": "Temporary route API outage uses account-scoped cache and reconciles on recovery"
+    },
+    {
+      "name": "Cold startup refreshes OS-stored credentials and restores workspace"
+    },
+    {
+      "name": "Raw tokens absent from frontend localStorage"
+    },
+    {
+      "name": "Invalid authentication clears session instead of exposing offline cache"
+    },
+    {
+      "name": "Cold-start callback consumes OS-stored pending state"
+    },
+    {
+      "name": "Already-running instance rejects replayed callback without exchanging the code"
+    }
+  ],
+  "drmCapabilityProbe": {
+    "com.widevine.alpha": "API accepted configuration",
+    "com.microsoft.playready.recommendation": "API accepted configuration"
+  },
+  "contractRequests": [
+    {
+      "path": "/token",
+      "grant": "authorization_code"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/routes/fixture-a",
+      "method": "PATCH"
+    },
+    {
+      "path": "/routes",
+      "method": "POST"
+    },
+    {
+      "path": "/routes/created-1",
+      "method": "DELETE"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "authorization_code"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    }
+  ],
+  "passed": true
+}

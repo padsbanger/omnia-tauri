@@ -1,6 +1,7 @@
 const GOOGLE_HOSTS = [
   "mail.google.com",
   "accounts.google.com",
+  "accounts.youtube.com",
   "google.com",
   "googleapis.com",
   "googleusercontent.com",

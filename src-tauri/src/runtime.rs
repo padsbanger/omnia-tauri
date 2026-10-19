@@ -92,8 +92,6 @@ impl Runtime {
         let mut hosts = route.internal_hosts.clone();
         hosts.push(url.host_str().unwrap_or_default().into());
         let nav_hosts = hosts.clone();
-        let use_popup = matches!(route.icon.as_str(), "twitter" | "tradingview");
-        let fixture = cfg!(debug_assertions) && std::env::var_os("OMNIA_SMOKE").is_some();
         let popup_hosts = hosts.clone();
         let popup_app = app.clone();
         let popup_label = label.clone();
@@ -101,20 +99,28 @@ impl Runtime {
         let signals = self.signals.clone();
         let route_id = id.to_string();
         let title_app = app.clone();
+        let trace = crate::navigation_trace::Trace::new(&self.root, &label);
+        let nav_trace = trace.clone();
+        trace.record("route_created", &url);
         let mut builder = WebviewBuilder::new(&label, WebviewUrl::External(url))
             .data_directory(profile)
-            .on_navigation(move |url| security::navigate(url, &nav_hosts))
+            .on_navigation(move |url| nav_trace.navigate(url, &nav_hosts))
             .on_new_window(move |url, features| {
-                if !security::navigate(&url, &popup_hosts) {
+                trace.record("popup_requested", &url);
+                let preserve = security::preserve_popup(&url, &popup_hosts);
+                if !preserve && !trace.navigate(&url, &popup_hosts) {
                     return NewWindowResponse::Deny;
                 }
-                if !fixture && !(use_popup && security::google_popup(&url)) {
+                if !preserve {
+                    trace.record("popup_redirected_to_parent", &url);
                     if let Some(view) = popup_app.get_webview(&popup_label) {
                         let _ = view.navigate(url);
                     }
                     return NewWindowResponse::Deny;
                 }
                 let popup_nav = popup_hosts.clone();
+                let popup_trace = trace.popup();
+                let nested_trace = popup_trace.clone();
                 let p = tauri::WebviewWindowBuilder::new(
                     &popup_app,
                     format!("{popup_label}-popup"),
@@ -124,14 +130,23 @@ impl Runtime {
                 .data_directory(popup_profile.clone())
                 .title("Omnia — service sign-in")
                 .on_navigation(move |u| {
-                    u.as_str() == "about:blank" || security::navigate(u, &popup_nav)
+                    u.as_str() == "about:blank" || popup_trace.navigate(u, &popup_nav)
                 })
-                .on_new_window(|_, _| NewWindowResponse::Deny)
+                .on_new_window(move |u, _| {
+                    nested_trace.record("nested_popup_denied", &u);
+                    NewWindowResponse::Deny
+                })
                 .on_permission_request(|_, _| tauri::webview::PermissionResponse::Deny)
                 .build();
                 match p {
-                    Ok(window) => NewWindowResponse::Create { window },
-                    Err(_) => NewWindowResponse::Deny,
+                    Ok(window) => {
+                        trace.record("popup_created", &url);
+                        NewWindowResponse::Create { window }
+                    }
+                    Err(_) => {
+                        trace.record("popup_creation_failed", &url);
+                        NewWindowResponse::Deny
+                    }
                 }
             })
             .on_permission_request(|_, _| tauri::webview::PermissionResponse::Deny)

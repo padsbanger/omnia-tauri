@@ -79,6 +79,8 @@ App identity is `com.strielok.omnia.tauri`. On Windows the data root is `%LOCALA
 
 ## Troubleshooting
 
+- Hosted-site browser handoffs can be diagnosed with `diagnostics/navigation.jsonl` under the app data root. Development builds enable this bounded local trace by default; set `OMNIA_NAVIGATION_TRACE=0` to disable it, or `OMNIA_NAVIGATION_TRACE=1` to enable it in a packaged build. It records native view identifiers, destination hosts, a few known Google login paths and navigation/popup decisions. Query strings, fragments, credentials and other paths are omitted. No trace is uploaded. On Windows development the file is `%LOCALAPPDATA%/com.strielok.omnia.tauri/development/diagnostics/navigation.jsonl`.
+- Gmail opening an external browser during sign-in: native traces identified missing YouTube and regional Google account hosts (`accounts.google.pl` in the reported flow). This build keeps verified Google account steps inside Google-enabled routes using a pinned list in `src/common/google_account_hosts.json`, derived from Google's official supported-domains list. Regional exceptions require exact hosts, HTTPS, port 443 and no embedded credentials; arbitrary `google.*` matches are not accepted. Actual Google account login still requires a user retry. Restart the app to reload the policy; clearing your route's session is unnecessary.
 - A bare browser cannot invoke native operations. Launch via `npm start`.
 - If PowerShell rejects `npm.ps1`, use `npm.cmd`; no execution-policy change is needed.
 - A locked credential store prevents sign-in or session restoration. Unlock the platform store (Windows Credential Manager, macOS Keychain, Linux Secret Service) and retry.

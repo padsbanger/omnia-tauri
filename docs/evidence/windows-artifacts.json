@@ -1,22 +1,23 @@
-{
-  "platform": "Windows x64",
-  "signed": false,
-  "installed": false,
-  "artifacts": [
-    {
-      "path": "src-tauri/target/release/omnia-tauri.exe",
-      "bytes": 15619584,
-      "sha256": "77eb2c913257af5588638b7596ca19e8dd956ef408d651f666039d428c2fed9e"
-    },
-    {
-      "path": "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
-      "bytes": 6225920,
-      "sha256": "194fa51a0ea9b20f3841aac0fb1c5661ef0207b5cf34377718f782861b02cbac"
-    },
-    {
-      "path": "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-      "bytes": 4293378,
-      "sha256": "1719b97377845affa8054fc01b5c6fa0ca59b8b24b177b27d98e6bd968a4e869"
-    }
-  ]
+﻿{
+    "platform":  "Windows x64",
+    "signed":  false,
+    "installed":  false,
+    "artifacts":  [
+                      {
+                          "path":  "src-tauri/target/release/omnia-tauri.exe",
+                          "bytes":  15664640,
+                          "sha256":  "141d10022c3537773117f61a29208a7d6b3b1a00e8ac29a1d3802b26c8fa5ba5"
+                      },
+                      {
+                          "path":  "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
+                          "bytes":  6238208,
+                          "sha256":  "e12a0750d86cb1db02b61b8b2a305a328e5bcd8ceaf10157f25b5e7c1bc5e1f8"
+                      },
+                      {
+                          "path":  "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
+                          "bytes":  4301371,
+                          "sha256":  "e83bdabe7d3369d59b74173a437f104ecf7315acb206a60b5763062f5a64fef5"
+                      }
+                  ],
+    "note":  "Regional Google account policy rebuilt; full native regional smoke passed, real Gmail retry pending"
 }
