@@ -91,7 +91,7 @@ export const native = {
     return toRoute(await call<NativeRoute>("route_action", { id, action }));
   },
   layout: (placements: Placement[], drawer: boolean) =>
-    call<void>("layout_views", { revision: ++revision, placements, drawer }),
+    call<boolean>("layout_views", { revision: ++revision, placements, drawer }),
   preferences: (
     activeTab: string | null,
     windowLayout: WindowLayout,

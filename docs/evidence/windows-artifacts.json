@@ -1,23 +1,23 @@
-﻿{
+{
     "platform":  "Windows x64",
     "signed":  false,
     "installed":  false,
     "artifacts":  [
                       {
                           "path":  "src-tauri/target/release/omnia-tauri.exe",
-                          "bytes":  15664640,
-                          "sha256":  "141d10022c3537773117f61a29208a7d6b3b1a00e8ac29a1d3802b26c8fa5ba5"
+                          "bytes":  15678464,
+                          "sha256":  "3bc1294ee17ea0a56073bf0494f9a1546ff09373284faf78cd2f4d950efc41b5"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
-                          "bytes":  6238208,
-                          "sha256":  "e12a0750d86cb1db02b61b8b2a305a328e5bcd8ceaf10157f25b5e7c1bc5e1f8"
+                          "bytes":  6230016,
+                          "sha256":  "d961932247ffc7e432f654eeb263eeaa8756d39e929c6ab7dbd6f99f519310ce"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-                          "bytes":  4301371,
-                          "sha256":  "e83bdabe7d3369d59b74173a437f104ecf7315acb206a60b5763062f5a64fef5"
+                          "bytes":  4295193,
+                          "sha256":  "22a5777b8146232bc284f736389f2aac554b148a13da937d43d20ff274372dff"
                       }
                   ],
-    "note":  "Regional Google account policy rebuilt; full native regional smoke passed, real Gmail retry pending"
+    "note":  "Rebuilt after Windows live transparent drawer overlay; 30 native checks pass including composited live pixels, resize, dismissal and focus restoration"
 }

@@ -48,7 +48,7 @@ Run coverage before CRAP; CRAP reuses that coverage. Threshold is 8; normal appl
 
 Tauri `2.12.4` explicitly enables its `unstable` multiwebview feature; `tauri-build 2.7.3`, Wry `0.57.0` and the resolved graph are locked. Child views are genuine native webviews, not iframes. The trusted shell alone receives management permissions, and every custom management command additionally validates its native caller label and local origin. Remote route capabilities expose only bounded unread/favicon hints whose identity is derived from the native view. Popups receive no management permissions. Authentication responses are processed in Rust, not globally broadcast as URL events.
 
-Drawers retain their original components but render inside the trusted shell after native route views have been hidden. Closing the drawer restores the views without recreation. This deliberate z-order change avoids relying on CSS to cover native surfaces. All non-hibernated routes are retained, including background routes. Memory is shown as unavailable; no performance advantage is asserted.
+On Windows, drawers render in the transparent trusted shell, raised above the native route views. Websites remain visible and live beneath the translucent backdrop; closing the drawer restores website focus without recreating views. Linux/macOS retain the hide/show drawer path pending native compositing verification. All non-hibernated routes are retained, including background routes. Memory displays are omitted; no performance advantage is asserted.
 
 ## Configuration
 

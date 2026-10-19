@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { routeAction } from "../actions";
 import { Button } from "@heroui/react";
-import { MdClose, MdMemory } from "react-icons/md";
+import { MdClose } from "react-icons/md";
 
 import { WindowLayout } from "../../common/drawer";
 import { Route } from "../../common/routes";
@@ -159,15 +159,6 @@ const ManageRoutesDrawer = ({
             windowLayout={windowLayout}
           />
         )}
-        <div className="mt-1 flex items-center justify-between rounded-xl border border-slate-200/70 bg-white/70 px-3 py-2.5 text-xs text-slate-500">
-          <span className="flex items-center gap-2">
-            <MdMemory className="text-base text-slate-400" />
-            Per-route memory
-          </span>
-          <span className="font-semibold tabular-nums text-slate-700">
-            Unavailable in this engine
-          </span>
-        </div>
       </div>
     </div>
   );

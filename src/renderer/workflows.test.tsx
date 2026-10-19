@@ -44,8 +44,8 @@ beforeEach(() => {
   useAppStore.getState().apply(workspace);
   useAuthStore.getState().setUser(workspace.user);
   vi.mocked(native.bootstrap).mockResolvedValue(workspace);
+  vi.mocked(native.layout).mockResolvedValue(true);
   for (const fn of [
-    native.layout,
     native.preferences,
     native.login,
     native.cancelLogin,
@@ -94,6 +94,23 @@ beforeEach(() => {
   });
 });
 describe("retained Omnia workflows", () => {
+  it("enables live drawer transparency only after native layout and removes it on close", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "Manage routes" }));
+    await screen.findByRole("heading", { name: "Manage routes" });
+    await waitFor(() => expect(document.documentElement.classList.contains("native-drawer-open")).toBe(true));
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(document.documentElement.classList.contains("native-drawer-open")).toBe(false));
+  });
+  it("retains an opaque shell on engines without live drawer compositing", async () => {
+    vi.mocked(native.layout).mockResolvedValue(false);
+    const user = userEvent.setup();
+    render(<App />);
+    await user.click(await screen.findByRole("button", { name: "Manage routes" }));
+    await screen.findByRole("heading", { name: "Manage routes" });
+    expect(document.documentElement.classList.contains("native-drawer-open")).toBe(false);
+  });
   it("validates URLs before creating and preserves the form when a mutation fails", async () => {
     const user = userEvent.setup();
     const close = vi.fn();
@@ -262,7 +279,7 @@ describe("retained Omnia workflows", () => {
         .disabled,
     ).toBe(true);
     await user.click(screen.getByRole("button", { name: "Manage routes" }));
-    await screen.findByText("Unavailable in this engine");
+    await screen.findByRole("heading", { name: "Manage routes" });
     expect(
       (
         screen.getAllByRole("button", {

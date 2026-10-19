@@ -87,6 +87,11 @@ function Workspace() {
   const store = useAppStore();
   const content = useRef<HTMLDivElement>(null);
   const [drawerReady, setDrawerReady] = useState(false);
+  const [liveBackdrop, setLiveBackdrop] = useState(false);
+  useEffect(() => {
+    document.documentElement.classList.toggle("native-drawer-open", drawerReady && liveBackdrop);
+    return () => document.documentElement.classList.remove("native-drawer-open");
+  }, [drawerReady, liveBackdrop]);
   useEffect(() => setDrawerReady(false), [store.activeDrawer]);
   useEffect(() => {
     let disposed = false,
@@ -104,8 +109,11 @@ function Workspace() {
         );
         void native
           .layout(next, !!store.activeDrawer)
-          .then(() => {
-            if (!disposed) setDrawerReady(!!store.activeDrawer);
+          .then((live) => {
+            if (!disposed) {
+              setLiveBackdrop(live);
+              setDrawerReady(!!store.activeDrawer);
+            }
           })
           .catch((e) => store.setError(message(e)));
       });
@@ -171,7 +179,8 @@ function Workspace() {
         <WorkspacePlaceholder />
         {drawerReady && (
           <div
-            className="absolute inset-0 z-30 bg-slate-950/20"
+            className="absolute inset-0 z-30 bg-slate-950/50"
+            data-testid="drawer-backdrop"
             onClick={close}
           >
             <div

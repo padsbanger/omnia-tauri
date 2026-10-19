@@ -80,7 +80,7 @@ const SettingsDrawer = ({ closeDrawer }: SettingsDrawerProps) => {
           {websitePermissions
             ? "Camera, microphone and website notifications are restricted to trusted route origins. Hardware capture and notification delivery need provider verification."
             : "Camera, microphone and website notification permissions are unavailable on this engine."}{" "}
-          Per-route memory is unavailable. DRM playback requires provider
+          DRM playback requires provider
           verification.
         </p>
         <section className="rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm">

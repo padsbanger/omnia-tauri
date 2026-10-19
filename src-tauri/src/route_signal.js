@@ -230,6 +230,72 @@
     return null;
   };
 
+  // AnimatedCounter briefly contains current, outgoing and incoming digits.
+  // Read its sizing/current digit once, independent of hashed CSS modules.
+  const telegramCounterText = (node) => {
+    if (node.nodeType === 3) return node.textContent;
+    const children = Array.from(node.childNodes);
+    if (children.length === 3 && children.every(child => child.nodeName === 'DIV')) {
+      return telegramCounterText(children[0]);
+    }
+    return children.map(telegramCounterText).join('');
+  };
+
+  const readTelegramA = () => {
+    const rows = Array.from(document.querySelectorAll('#LeftColumn .chat-list .Chat'))
+      .filter(isElementVisible);
+    if (rows.length === 0) return null;
+    const counts = new Map();
+    for (const row of rows) {
+      let count = 0;
+      // Web A's current badge classes are hashed. Its transition class and
+      // numeric AnimatedCounter span are stable; bot buttons/icons are excluded.
+      const counters = row.querySelectorAll(
+        '.subtitle .chat-badge-transition.open div > span, .subtitle .Badge.unread',
+      );
+      for (const counter of counters) {
+        if (!isElementVisible(counter)) continue;
+        count = Math.max(count, parseExactCount(counter.getAttribute('aria-label'))
+          ?? parseExactCount(telegramCounterText(counter)) ?? 0);
+      }
+      const peer = row.querySelector('a.ListItem-button[href]')?.getAttribute('href') || row;
+      counts.set(peer, Math.max(counts.get(peer) || 0, count));
+    }
+    return Math.min(maxUnreadCount, Array.from(counts.values()).reduce((a, b) => a + b, 0));
+  };
+
+  // Telegram can leave both document.title and the page Badging API unchanged
+  // while its chat list has unread items. Read only the dedicated counters,
+  // never message text, dates, bot buttons, pinned icons or archive summaries.
+  const readTelegram = () => {
+    if (!isTelegramHost) return null;
+    const webA = readTelegramA();
+    if (webA !== null) return webA;
+    const rows = Array.from(document.querySelectorAll(
+      '#column-left .chatlist .chatlist-chat[data-peer-id], #column-left .chatlist .rp[data-peer-id]',
+    )).filter(isElementVisible);
+    if (rows.length === 0) return null;
+    const counts = new Map();
+    for (const row of rows) {
+      const badges = row.querySelectorAll(
+        '.dialog-subtitle-badge-unread, .dialog-subtitle-badge.unread:not(.avatar-badge)',
+      );
+      let count = 0;
+      for (const badge of badges) {
+        if (!isElementVisible(badge)) continue;
+        // Rolling digits can contain outgoing and incoming text at once;
+        // Telegram's accessible label contains the actual current count.
+        const value = parseExactCount(badge.getAttribute('aria-label'))
+          ?? parseExactCount(badge.textContent)
+          ?? (badge.classList.contains('is-badge-empty') || badge.classList.contains('mention') ? 1 : 0);
+        count = Math.max(count, value);
+      }
+      const peer = row.getAttribute('data-peer-id');
+      counts.set(peer, Math.max(counts.get(peer) || 0, count));
+    }
+    return Math.min(maxUnreadCount, Array.from(counts.values()).reduce((a, b) => a + b, 0));
+  };
+
   const readTitle = () => {
     const titleText = String(document.title || "");
     const unreadTextCount = parseUnreadText(titleText);
@@ -246,16 +312,50 @@
     return titleMatch ? parseCount(titleMatch[1]) : null;
   };
 
-  const emit = (count, source) => {
-    const normalizedCount = Math.max(0, Math.min(maxUnreadCount, Math.floor(count)));
-    const key = source + ":" + normalizedCount;
-
-    if (window.__omniaLastUnreadKey === key) {
+  // A hint is delivered only after native acknowledgement. Startup may precede
+  // bridge readiness, and the native rate limit can reject an otherwise valid
+  // update. Keep only the latest pending value per source and retry failures.
+  const acknowledged = new Map();
+  const pending = new Map();
+  let sending = false;
+  let deliveryTimer = null;
+  let retryDelay = 250;
+  const scheduleDelivery = (delay) => {
+    if (deliveryTimer !== null) return;
+    deliveryTimer = window.setTimeout(() => {
+      deliveryTimer = null;
+      deliver();
+    }, delay);
+  };
+  const deliver = () => {
+    if (sending || deliveryTimer !== null || pending.size === 0) return;
+    const bridge = window.__TAURI_INTERNALS__;
+    if (typeof bridge?.invoke !== "function") {
+      scheduleDelivery(retryDelay);
+      retryDelay = Math.min(5000, retryDelay * 2);
       return;
     }
-
-    window.__omniaLastUnreadKey = key;
-    window.__TAURI_INTERNALS__?.invoke('page_signal', { count: normalizedCount, source }).catch(() => {});
+    const [source, count] = pending.entries().next().value;
+    pending.delete(source);
+    sending = true;
+    Promise.resolve().then(() => bridge.invoke("page_signal", { count, source }))
+      .then(() => {
+        acknowledged.set(source, count);
+        retryDelay = 250;
+      }, () => {
+        if (!pending.has(source)) pending.set(source, count);
+        retryDelay = Math.min(5000, retryDelay * 2);
+      })
+      .finally(() => {
+        sending = false;
+        if (pending.size > 0) scheduleDelivery(retryDelay);
+      });
+  };
+  const emit = (count, source) => {
+    const normalizedCount = Math.max(0, Math.min(maxUnreadCount, Math.floor(count)));
+    if (acknowledged.get(source) === normalizedCount && !pending.has(source) && !sending) return;
+    pending.set(source, normalizedCount);
+    deliver();
   };
 
   const installTelegramAppBadgeBridge = () => {
@@ -275,6 +375,14 @@
       emit(0, "telegram-app-badge");
       return Promise.resolve();
     };
+
+    // Web A detects Tauri and bypasses navigator.setAppBadge in favour of
+    // this host callback. Expose only the same bounded, untrusted count hint.
+    const telegramHost = window.tauri || {};
+    if (typeof telegramHost.setNotificationsCount !== 'function') {
+      telegramHost.setNotificationsCount = setAppBadge;
+    }
+    if (!window.tauri) window.tauri = telegramHost;
 
     try {
       Object.defineProperties(window.navigator, {
@@ -314,6 +422,11 @@
       return;
     }
 
+    const telegramCount = readTelegram();
+    if (telegramCount !== null) {
+      emit(telegramCount, "telegram-dom");
+      return;
+    }
     const titleCount = readTitle();
     emit(titleCount ?? 0, "title");
   };
@@ -341,7 +454,7 @@
 
     observer.observe(target, {
       attributes: true,
-      attributeFilter: ["aria-label", "title", "data-tooltip"],
+      attributeFilter: ["aria-label", "title", "data-tooltip", "class", "hidden", "aria-hidden"],
       childList: true,
       characterData: true,
       subtree: true,

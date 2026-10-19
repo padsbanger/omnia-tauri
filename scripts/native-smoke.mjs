@@ -13,6 +13,7 @@ if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app be
 const evidence = { platform: process.platform, started: new Date().toISOString(), checks: [] };
 const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
 const backend=mockBackend('http://127.0.0.1:7890');
+backend.state.routes[0].icon='telegram';
 const fixture = createServer(async (req,res) => {
   if(await backend.handle(req,res)) return;
   if(req.url==='/favicon.png'){res.writeHead(200,{'Content-Type':'image/png'});res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQ2kAAAAASUVORK5CYII=','base64'));return;}
@@ -50,6 +51,15 @@ const bounds=(x,y,width,height)=>({x,y,width,height});
 const spread=[{routeId:'fixture-a',bounds:bounds(108,120,500,600)},{routeId:'fixture-b',bounds:bounds(608,120,500,600)}];
 const layout=(page,placements=spread,drawer=false)=>invoke(page,'layout_views',{revision:++revision,placements,drawer});
 const action=(page,id,action)=>invoke(page,'route_action',{id,action});
+async function waitUnread(page,id,count){
+  let snapshot;
+  for(let i=0;i<80;i++){
+    snapshot=await invoke(page,'unread_snapshot');
+    if(snapshot.unreadCounts.find(entry=>entry.routeId===id)?.count===count)return snapshot;
+    await delay(100);
+  }
+  assert.fail(`Unread count for ${id} did not reach ${count}: ${JSON.stringify(snapshot)}`);
+}
 async function routes(){routeBrowsers=await Promise.all([connect(portA),connect(9224)]);return Promise.all(routeBrowsers.map(async b=>{const p=b.contexts()[0].pages().find(p=>p.url().includes(':7890'))||b.contexts()[0].pages()[0];await p.waitForSelector('#identity');return p;}));}
 async function stop(){for(const b of routeBrowsers)await b.close().catch(()=>{});routeBrowsers=[];await shellBrowser?.close().catch(()=>{});if(app){app.kill();await delay(1500);}}
 try {
@@ -71,14 +81,14 @@ try {
     }return results;
   });evidence.drmCapabilityProbe=drm;console.log('DRM capability probe (not playback)',drm);
   const denial=await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('route_action',{id:'fixture-b',action:'clear_session'}).then(()=>false,()=>true));assert.equal(denial,true);check('Untrusted route denied privileged route action');
-  await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_signal',{count:0,source:'title'}));
+  await delay(250);await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_signal',{count:0,source:'title'}));
   assert.equal(await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_signal',{count:-1,source:'title'}).then(()=>false,()=>true)),true);
   assert.equal(await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_favicon',{url:'file:///secret'}).then(()=>false,()=>true)),true);
   const discovered=await action(shell,'fixture-a','focus');assert.equal(discovered.faviconUrl,'http://127.0.0.1:7890/favicon.png');check('Native favicon discovery and malformed hint rejection');
   await a.evaluate(()=>document.title='(7) Fixture');await delay(500);const unread=await invoke(shell,'unread_snapshot');assert.equal(unread.total,7);check('Native title unread signal',unread);
   for(const placements of [[spread[0]],spread,[{routeId:'fixture-a',bounds:bounds(108,120,1000,290)},{routeId:'fixture-b',bounds:bounds(108,410,1000,290)}]]){await layout(shell,placements);}
-  await layout(shell,spread,true);assert.ok((await invoke(shell,'smoke_inspect')).views.every(v=>v.visible===false));await layout(shell);await action(shell,'fixture-a','focus');
-  check('Single/spread/matrix positioning, hide/show, drawer occlusion, focus commands');
+  await layout(shell,spread,true);assert.ok((await invoke(shell,'smoke_inspect')).views.every(v=>v.visible===true));await layout(shell);await action(shell,'fixture-a','focus');
+  check('Single/spread/matrix positioning, hide/show, live views during drawer overlay, focus commands');
   const zoom=await action(shell,'fixture-a','zoom_in');assert.equal(zoom.zoomLevel,0.5);await action(shell,'fixture-a','refresh');await a.waitForSelector('#identity');assert.equal(await a.locator('#identity').textContent(),'Alice');check('Refresh and Electron-equivalent zoom scale');
   await a.locator('#popup').click();await delay(1000);
   const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
@@ -113,7 +123,7 @@ try {
     if(url.href===login) return route.fulfill({status:200,contentType:'text/html',headers:{'set-cookie':'native_fixture_auth=Alice; Secure; SameSite=Lax; Path=/'},body:`<!doctype html><script>location.replace(${JSON.stringify(sessionHop)})</script>`});
     const hopIndex=[sessionHop,...regionalHops].indexOf(url.href);
     if(hopIndex>=0) return route.fulfill({status:200,contentType:'text/html',body:`<!doctype html><script>location.replace(${JSON.stringify([...regionalHops,inbox][hopIndex])})</script>`});
-    if(url.href===inbox) return route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><p id="auth-result"></p><script>document.querySelector("#auth-result").textContent=document.cookie.includes("native_fixture_auth=Alice")?"Alice":"empty";</script>'});
+    if(url.href===inbox) return route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Odebrane (12)</title><nav><div><a href="#inbox">Odebrane</a><span id="fixture-count">23</span></div></nav><p id="auth-result"></p><script>document.querySelector("#auth-result").textContent=document.cookie.includes("native_fixture_auth=Alice")?"Alice":"empty";</script>'});
     return route.abort();
   };
   await a.route('https://**/*',googleFixture);await b.route('https://**/*',googleFixture);
@@ -126,6 +136,10 @@ try {
   for(const host of regionalHosts) assert.ok(handoffTrace.some(event=>event.event==='navigation_allowed'&&event.destination.host===host));
   assert.ok(!handoffTrace.some(event=>event.event==='external_target'||event.event==='popup_requested'));
   check('Gmail continuation through YouTube and Polish, UK and German account hosts completes in the originating native profile without browser handoff; duplicate profile stays signed out');
+  await waitUnread(shell,'fixture-a',23);await waitUnread(shell,'fixture-b',23);
+  await a.locator('#fixture-count').evaluate(node=>{node.textContent='0';});
+  await waitUnread(shell,'fixture-a',0);
+  check('Injected Gmail DOM signals cross the HTTPS native boundary and clear unread counts');
   await mkdir('reports',{recursive:true});await shell.screenshot({path:'reports/native-shell.png'});
   await stop();portA=9223;shell=await launch();
   await invoke(shell,'auth_logout');await shell.reload();
@@ -137,9 +151,86 @@ try {
   await shell.getByRole('button',{name:'Sign in',exact:true}).click();
   await shell.getByRole('button',{name:'Manage routes',exact:true}).waitFor({timeout:25000});
   check('Native OIDC PKCE exchange, OS credential storage and production route-list contract against local fixture');
+  const workspaceRoutes=(await invoke(shell,'workspace_bootstrap')).routes;
+  const workspaceEpoch=workspaceRoutes.find(route=>route.id==='fixture-a').epoch;
+  const workspaceBrowser=await connect(9323+workspaceEpoch*2);routeBrowsers.push(workspaceBrowser);
+  const workspacePage=workspaceBrowser.contexts()[0].pages().find(page=>page.url().includes(':7890'));
+  assert.ok(workspacePage);
+  await workspacePage.evaluate(()=>{document.title='Inbox (17)';});
+  await waitUnread(shell,'fixture-a',17);
+  await shell.getByLabel('17 unread',{exact:true}).waitFor();
+  assert.equal((await invoke(shell,'smoke_inspect')).title,'(17) Omnia');
+  await workspacePage.evaluate(()=>{document.title='Inbox';});
+  await waitUnread(shell,'fixture-a',0);
+  await shell.getByLabel('17 unread',{exact:true}).waitFor({state:'detached'});
+  assert.equal((await invoke(shell,'smoke_inspect')).title,'Omnia');
+  check('Injected unread updates render a visible sidebar badge and native window total, then clear both');
+  await workspacePage.route('https://**/*',route=>new URL(route.request().url()).hostname==='web.telegram.org'
+    ? route.fulfill({status:200,contentType:'text/html',body:`<!doctype html><title>Telegram</title>
+      <div id="LeftColumn"><div class="chat-list"><div class="Chat"><a class="ListItem-button" href="#101">
+        <div class="subtitle">Fixture preview<div class="chat-badge-transition shown open"><div class="hashed-wrapper">
+          <div class="hashed-badge"><span id="telegram-count">1</span></div>
+        </div></div></div></a></div>
+        <div class="Chat"><div class="subtitle"><div class="chat-badge-transition shown open"><button>Open</button></div></div></div>
+      </div></div>`}) : route.abort());
+  await workspacePage.goto('https://web.telegram.org/a/');
+  for(const count of [1,4,0]) {
+    if(count===4) await workspacePage.locator('#telegram-count').evaluate(node=>{node.innerHTML='<div><div>4</div><div>1</div><div>4</div></div>';});
+    if(count===0) await workspacePage.locator('#telegram-count').evaluate(node=>node.remove());
+    await waitUnread(shell,'fixture-a',count);
+    if(count) await shell.getByLabel(`${count} unread`,{exact:true}).waitFor();
+    else await shell.getByLabel('4 unread',{exact:true}).waitFor({state:'detached'});
+    assert.equal((await invoke(shell,'smoke_inspect')).title,count?`(${count}) Omnia`:'Omnia');
+  }
+  check('Telegram Web A DOM counters with plain title and no Badging API update the visible sidebar/native total 1 -> 4 -> 0');
+  for(const count of [1,0]) {
+    await workspacePage.evaluate(count=>window.tauri.setNotificationsCount(count),count);
+    await waitUnread(shell,'fixture-a',count);
+    await shell.getByLabel('1 unread',{exact:true}).waitFor({state:count?'visible':'detached'});
+    assert.equal((await invoke(shell,'smoke_inspect')).title,count?'(1) Omnia':'Omnia');
+  }
+  check('Telegram Web A Tauri-specific count callback updates and clears the sidebar/native total');
+  await workspacePage.evaluate(()=>{document.body.style.background='rgb(40, 160, 240)';});
+  await delay(500);
+  const beforeDrawer=await invoke(shell,'smoke_inspect');
+  assert.deepEqual(beforeDrawer.pixels[1],[40,160,240],'Native fixture must be foreground and visibly blue before overlay');
   await shell.getByRole('button',{name:'Manage routes',exact:true}).click();
   await shell.getByRole('heading',{name:'Manage routes'}).waitFor();
-  assert.ok(await shell.getByText('Memory unavailable').count());
+  await shell.waitForFunction(()=>document.documentElement.classList.contains('native-drawer-open'));
+  await delay(500);
+  const blueDrawer=await invoke(shell,'smoke_inspect');
+  assert.ok(blueDrawer.views.find(v=>v.id==='fixture-a').visible);
+  assert.equal(blueDrawer.views.find(v=>v.id==='fixture-a').label,beforeDrawer.views.find(v=>v.id==='fixture-a').label);
+  const near=(actual,expected)=>assert.ok(actual.every((v,i)=>Math.abs(v-expected[i])<=8),`Composited pixel ${actual} expected ${expected}`);
+  near(blueDrawer.pixels[1],[21,83,132]);
+  await workspacePage.evaluate(()=>{document.body.style.background='rgb(240, 80, 40)';});
+  await delay(500);
+  const redDrawer=await invoke(shell,'smoke_inspect');
+  near(redDrawer.pixels[1],[121,43,32]);
+  assert.equal(await shell.evaluate(()=>document.hasFocus()),true);
+  check('Real native compositing shows live page color changes under translucent drawer backdrop without recreating the view', {before:beforeDrawer.pixels,blue:blueDrawer.pixels,red:redDrawer.pixels});
+  await invoke(shell,'smoke_inspect',{size:[1000,700]});
+  await shell.waitForFunction(()=>innerWidth===1000&&innerHeight===700);
+  await delay(500);
+  const resizedDrawer=await invoke(shell,'smoke_inspect');
+  near(resizedDrawer.pixels[1],[121,43,32]);
+  assert.equal(resizedDrawer.views.find(v=>v.id==='fixture-a').label,beforeDrawer.views.find(v=>v.id==='fixture-a').label);
+  await shell.getByTestId('drawer-backdrop').click({position:{x:850,y:500}});
+  await shell.getByRole('heading',{name:'Manage routes'}).waitFor({state:'detached'});
+  await delay(500);
+  near((await invoke(shell,'smoke_inspect')).pixels[1],[240,80,40]);
+  assert.equal(await workspacePage.evaluate(()=>document.hasFocus()),true);
+  await shell.getByRole('button',{name:'Settings',exact:true}).click();
+  await shell.waitForFunction(()=>document.documentElement.classList.contains('native-drawer-open'));
+  await delay(300);near((await invoke(shell,'smoke_inspect')).pixels[1],[121,43,32]);
+  await shell.keyboard.press('Escape');
+  await shell.waitForFunction(()=>!document.documentElement.classList.contains('native-drawer-open'));
+  await delay(300);near((await invoke(shell,'smoke_inspect')).pixels[1],[240,80,40]);
+  await invoke(shell,'smoke_inspect',{size:[1200,800]});
+  await shell.waitForFunction(()=>innerWidth===1200&&innerHeight===800);
+  await shell.getByRole('button',{name:'Manage routes',exact:true}).click();
+  await shell.getByRole('heading',{name:'Manage routes'}).waitFor();
+  check('Live drawer survives native resize, click-outside close and Settings/Escape; focus returns to original website');
   await shell.getByRole('button',{name:'Rename',exact:true}).first().click();
   await shell.getByRole('textbox').fill('Renamed A');await shell.getByRole('button',{name:'Save',exact:true}).click();
   await shell.getByText('Renamed A',{exact:true}).first().waitFor();assert.equal(backend.state.routes[0].name,'Renamed A');

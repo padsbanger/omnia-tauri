@@ -2,6 +2,7 @@
 mod api;
 mod auth;
 mod config;
+mod drawer_layer;
 mod layout;
 mod navigation_trace;
 mod permissions;
@@ -19,6 +20,7 @@ async fn smoke_inspect(
     webview: tauri::Webview,
     app: tauri::AppHandle,
     state: tauri::State<'_, runtime::Native>,
+    size: Option<[u32; 2]>,
 ) -> Result<serde_json::Value, String> {
     security::trusted(&webview)?;
     if !cfg!(debug_assertions) || std::env::var_os("OMNIA_SMOKE").is_none() {
@@ -26,7 +28,45 @@ async fn smoke_inspect(
     }
     let rt = state.0.lock().await;
     let window = app.get_window("main").ok_or("Missing window")?;
+    if let Some([width, height]) = size {
+        if !(700..=1600).contains(&width) || !(500..=1000).contains(&height) {
+            return Err("Invalid smoke window size".into());
+        }
+        window
+            .set_size(tauri::LogicalSize::new(width, height))
+            .map_err(|e| e.to_string())?;
+    }
     let scale = window.scale_factor().map_err(|e| e.to_string())?;
+    #[cfg(target_os = "windows")]
+    let pixels = {
+        use windows::Win32::{
+            Foundation::POINT,
+            Graphics::Gdi::{ClientToScreen, GetDC, GetPixel, ReleaseDC},
+        };
+        let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+        let size = window.inner_size().map_err(|e| e.to_string())?;
+        // Two composited on-screen pixels from the deterministic smoke window.
+        // CDP screenshots capture one webview and cannot prove native layering.
+        let mut colors = Vec::new();
+        unsafe {
+            let dc = GetDC(None);
+            for fraction in [0.25, 0.8] {
+                let mut point = POINT {
+                    x: (f64::from(size.width) * fraction) as i32,
+                    y: (f64::from(size.height) * 0.75) as i32,
+                };
+                ClientToScreen(hwnd, &mut point)
+                    .ok()
+                    .map_err(|e| e.to_string())?;
+                let color = GetPixel(dc, point.x, point.y).0;
+                colors.push([color & 255, (color >> 8) & 255, (color >> 16) & 255]);
+            }
+            ReleaseDC(None, dc);
+        }
+        colors
+    };
+    #[cfg(not(target_os = "windows"))]
+    let pixels: Vec<[u32; 3]> = vec![];
     let mut views = vec![];
     for (id, label) in &rt.live {
         if let Some(v) = app.get_webview(label) {
@@ -51,7 +91,9 @@ async fn smoke_inspect(
             views.push(serde_json::json!({"id":id,"label":label,"x":p.x,"y":p.y,"width":size.width,"height":size.height,"visible":visible}));
         }
     }
-    Ok(serde_json::json!({"scale":scale,"views":views}))
+    Ok(
+        serde_json::json!({"scale":scale,"views":views,"pixels":pixels,"drawerOpen":rt.drawer_open,"title":window.title().map_err(|e| e.to_string())?}),
+    )
 }
 #[tauri::command]
 async fn spike_seed(
@@ -162,6 +204,7 @@ fn main() {
                 "shell",
                 tauri::WebviewUrl::App("index.html".into()),
             )
+            .transparent(drawer_layer::LIVE_BACKDROP)
             .data_directory(root.join("shell"))
             .on_navigation(security::shell_url)
             .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny);

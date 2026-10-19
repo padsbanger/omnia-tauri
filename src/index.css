@@ -44,6 +44,11 @@ body {
   scrollbar-width: thin;
 }
 
+html.native-drawer-open,
+.native-drawer-open body {
+  background: transparent;
+}
+
 .omnia-scrollbar::-webkit-scrollbar {
   width: 6px;
 }

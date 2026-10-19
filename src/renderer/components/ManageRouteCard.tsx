@@ -47,18 +47,7 @@ const RouteStatus = ({ route }: Pick<ManageRouteCardProps, "route">) => {
       </span>
     );
   }
-  if (route.memoryUsage) {
-    return (
-      <span className="shrink-0 text-[11px] text-slate-400">
-        {(route.memoryUsage.residentSet / 1024).toFixed(1)} MB
-      </span>
-    );
-  }
-  return (
-    <span className="shrink-0 text-[11px] text-slate-400">
-      Memory unavailable
-    </span>
-  );
+  return null;
 };
 
 type ActionButtonProps = {

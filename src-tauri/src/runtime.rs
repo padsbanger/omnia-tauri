@@ -49,6 +49,7 @@ pub struct Runtime {
     pub signals: Arc<Mutex<Signals>>,
     pub serial: u64,
     pub layout_revision: u64,
+    pub drawer_open: bool,
 }
 impl Runtime {
     pub fn new(root: PathBuf) -> Self {
@@ -63,6 +64,7 @@ impl Runtime {
             signals: Arc::default(),
             serial: 0,
             layout_revision: 0,
+            drawer_open: false,
         }
     }
     pub fn route(&self, id: &str) -> Result<Route, String> {
@@ -259,27 +261,30 @@ pub async fn layout_views(
     revision: u64,
     placements: Vec<Placement>,
     drawer: bool,
-) -> Result<(), String> {
+) -> Result<bool, String> {
     security::trusted(&webview)?;
     if placements.len() > 64 {
         return Err("Too many views".into());
     }
     let mut rt = state.0.lock().await;
     if revision < rt.layout_revision {
-        return Ok(());
+        return Ok(crate::drawer_layer::LIVE_BACKDROP);
     }
     rt.layout_revision = revision;
     for p in &placements {
         p.bounds.validate()?;
         rt.route(&p.route_id)?;
     }
-    for label in rt.live.values() {
-        if let Some(v) = app.get_webview(label) {
-            v.hide().map_err(|e| e.to_string())?;
+    let hide_for_drawer = drawer && !crate::drawer_layer::LIVE_BACKDROP;
+    for (id, label) in &rt.live {
+        if hide_for_drawer || !placements.iter().any(|p| p.route_id == *id) {
+            if let Some(v) = app.get_webview(label) {
+                v.hide().map_err(|e| e.to_string())?;
+            }
         }
     }
-    if drawer {
-        return Ok(());
+    if hide_for_drawer {
+        return Ok(false);
     }
     let awake: Vec<_> = rt
         .routes
@@ -308,7 +313,21 @@ pub async fn layout_views(
             v.show().map_err(|e| e.to_string())?;
         }
     }
-    Ok(())
+    crate::drawer_layer::set_open(&app, drawer).await?;
+    if drawer != rt.drawer_open {
+        if drawer {
+            webview.set_focus().map_err(|e| e.to_string())?;
+        } else if let Some(view) = rt
+            .active_tab
+            .as_ref()
+            .and_then(|id| rt.live.get(id))
+            .and_then(|label| app.get_webview(label))
+        {
+            view.set_focus().map_err(|e| e.to_string())?;
+        }
+    }
+    rt.drawer_open = drawer;
+    Ok(crate::drawer_layer::LIVE_BACKDROP)
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -407,7 +426,7 @@ pub async fn page_signal(
     if source.len() > 48
         || !matches!(
             source.as_str(),
-            "title" | "gmail-title" | "gmail-dom" | "telegram-app-badge" | "dom"
+            "title" | "gmail-title" | "gmail-dom" | "telegram-app-badge" | "telegram-dom" | "dom"
         )
     {
         return Err("Invalid signal".into());
@@ -424,7 +443,7 @@ pub async fn page_signal(
         .get(&id)
         .is_some_and(|t| t.elapsed() < Duration::from_millis(200))
     {
-        return Ok(());
+        return Err("Unread update rate limited; retry".into());
     }
     s.last.insert(id.clone(), Instant::now());
     s.unread.update(&id, count, &source);
