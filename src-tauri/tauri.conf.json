@@ -18,7 +18,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["icons/icon.ico", "icons/icon.png"],
+    "icon": ["icons/icon.ico", "icons/icon.png", "icons/512x512.png"],
     "macOS": { "minimumSystemVersion": "14.0" }
   }
 }

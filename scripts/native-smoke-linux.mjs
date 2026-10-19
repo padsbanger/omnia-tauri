@@ -51,6 +51,8 @@ const evidence = {
       process.env.OMNIA_SMOKE_DISPLAY ?? "existing desktop session",
   },
   checks: [],
+  exits: [],
+  runtimeDiagnostics: [],
   remaining: [
     {
       name: "Real providers, production Authentik and Spotify protected playback",
@@ -162,9 +164,18 @@ async function launch(args = [], environment = {}) {
     env: appEnv,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  app.stderr.on("data", (b) => process.stderr.write(b));
+  app.stderr.on("data", (b) => {
+    process.stderr.write(b);
+    for (const line of b.toString().split("\n")) {
+      if (
+        /free\(\):|corrupted.*chunks|Segmentation fault|malloc\(\):/.test(line)
+      ) {
+        evidence.runtimeDiagnostics.push(line.slice(0, 200));
+      }
+    }
+  });
   stopped = new Promise((resolve) =>
-    app.once("exit", (code, signal) => resolve({ code, signal })),
+    app.once("close", (code, signal) => resolve({ code, signal })),
   );
   await until(
     () =>
@@ -185,6 +196,12 @@ async function stop() {
   }
   app = null;
   await delay(500);
+  evidence.exits.push(result ?? { forcedTermination: true });
+  assert.deepEqual(
+    result,
+    { code: 0, signal: null },
+    "Native app must exit cleanly",
+  );
 }
 let revision = 0;
 const bounds = (x, y, width, height) => ({ x, y, width, height });
@@ -636,8 +653,25 @@ try {
   process.exitCode = 1;
 } finally {
   if (app) await invoke("auth_logout").catch(() => {});
-  await stop();
+  try {
+    await stop();
+  } catch (error) {
+    evidence.status = "fail";
+    evidence.failure = {
+      expected: "Clean native shutdown",
+      observed: error.message,
+    };
+    process.exitCode = 1;
+  }
   privateBus?.kill();
+  if (evidence.runtimeDiagnostics.length) {
+    evidence.status = "fail";
+    evidence.failure = {
+      expected: "No fatal native process diagnostics",
+      observed: evidence.runtimeDiagnostics.join("; "),
+    };
+    process.exitCode = 1;
+  }
   fixture.close();
   evidence.finished = new Date().toISOString();
   evidence.testStorage = directory;
