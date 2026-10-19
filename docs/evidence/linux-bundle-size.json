@@ -1,0 +1,102 @@
+{
+  "date": "2026-10-19",
+  "sourceBaseCommit": "dc05f22d73606ac9964d468c22ea716b77d2014f",
+  "configurationSha256": {
+    "src-tauri/Cargo.toml": "37bcc7ec615ee12cc2b402dc4ff9c76b5492b82820ecada9d480bb35fe093098",
+    ".github/workflows/verify.yml": "ba26a3536dfe0459d5474a9e5faf3928f56e911c6adafa97b6bf790d8db0b531"
+  },
+  "platform": "Omarchy/Arch x86_64, GTK 3.24.52, WebKitGTK 2.52.6, Rust 1.98.1",
+  "measurementScope": "Local before/after rebuild on the same host. Not measured Ubuntu CI artifact sizes.",
+  "baselineArtifactEvidence": "docs/evidence/linux-artifacts.json",
+  "build": {
+    "command": "PATH=/tmp/omnia-build-tools/usr/bin:$PATH CARGO_BUILD_JOBS=3 npm run native:build",
+    "exitCode": 0,
+    "releaseCompileSeconds": 465
+  },
+  "artifacts": [
+    {
+      "path": "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.0_amd64.AppImage",
+      "beforeBytes": 107985400,
+      "afterBytes": 105720312,
+      "reductionPercent": 2.1,
+      "sha256": "06d76fc21de86476f609901352503445ff849d7926e14bf55336cc1c01061aad"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/deb/Omnia Tauri_0.11.0_amd64.deb",
+      "beforeBytes": 8164412,
+      "afterBytes": 5537000,
+      "reductionPercent": 32.18,
+      "sha256": "eeebd46d1b1f53bf11e7f8c4523901223bba163260f3a7115d0c11b5d2d2af7f"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/rpm/Omnia Tauri-0.11.0-1.x86_64.rpm",
+      "beforeBytes": 8168633,
+      "afterBytes": 5542306,
+      "reductionPercent": 32.15,
+      "sha256": "54b10e5eaedcb6233e16d46d068375044b906481b811358a5a93316354240cb4"
+    },
+    {
+      "path": "src-tauri/target/release/omnia-tauri",
+      "beforeBytes": 25396128,
+      "afterBytes": 12578912,
+      "reductionPercent": 50.47,
+      "sha256": "e878b39f7c8b4ca1c9409d67e59784d5179801232f173c428046d4dcb5ae1bf8"
+    }
+  ],
+  "uploadSelection": {
+    "before": {
+      "files": 450,
+      "uncompressedBytes": 484483083,
+      "deflate6Bytes": 264660740
+    },
+    "after": {
+      "files": 3,
+      "installerBytes": 116799618,
+      "compressionLevel": 0,
+      "separateArtifacts": true
+    },
+    "method": "Before: summed raw DEFLATE level-6 file payloads under the old local bundle/** selection; excludes ZIP headers/metadata. After: finished installer bytes only, each in a separate stored ZIP (ZIP overhead excluded). Not the 213 MiB Ubuntu Actions download."
+  },
+  "checks": {
+    "lint": "pass",
+    "typecheck": "pass",
+    "frontendCoverage": {
+      "testsPassed": 115,
+      "statements": 92.92,
+      "branches": 88.23
+    },
+    "crapThreshold8": "pass; four existing callback mapping warnings",
+    "rustTests": 24,
+    "cargoFmt": "pass",
+    "cargoClippy": "pass, warnings denied",
+    "frontendAndNativeBuild": "pass",
+    "workflowYamlAndUploadGlobs": "pass; exactly one DEB, RPM and AppImage, no staging files",
+    "gitDiffCheck": "pass"
+  },
+  "launch": {
+    "artifact": "/home/strielok/Projects/omnia-tauri/src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.0_amd64.AppImage",
+    "scope": "AppImage extract-and-run, isolated signed-out shell startup/close only",
+    "renderer": "WEBKIT_DISABLE_DMABUF_RENDERER=1",
+    "installed": false,
+    "window": {
+      "title": "Omnia Tauri",
+      "class": "omnia-tauri",
+      "size": [
+        941,
+        1030
+      ]
+    },
+    "exitCode": 0,
+    "fatalDiagnostics": [],
+    "visualResult": "Native screenshot inspected: Omnia sign-in screen rendered.",
+    "initialHarnessIssue": "Initial launch rendered successfully, but the probe used obsolete Hyprland close syntax. Updated probe to native Lua window selector; repeated launch/close passed."
+  },
+  "limitations": [
+    "New GitHub Actions upload sizes not yet measured; changes remain local.",
+    "Windows/macOS optimized builds not executed locally.",
+    "AppImage test used extract-and-run, not FUSE mounting or installation.",
+    "Launch test covers signed-out shell rendering and clean close only, not provider authentication or the full native fixture suite.",
+    "Explicit DMABUF rendering workaround retained for this test; existing default-renderer/NVIDIA shutdown issue is unresolved.",
+    "Stripped release binaries have reduced crash-symbol detail; no runtime speed or memory claim."
+  ]
+}

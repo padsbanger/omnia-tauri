@@ -1,5 +1,13 @@
 # Progress record
 
+## Bundle size reduction — 2026-10-19
+
+User requested smaller bundles after the 213 MiB GitHub Linux artifact. Workflow now uploads only finished installers, with separate Linux DEB/RPM/AppImage artifacts; excludes AppDir/staging trees on every OS. Cargo release profile uses opt-level=s, ThinLTO, codegen-units=1, strip=symbols; panic unwind and dev profile unchanged. No libraries or product features removed.
+
+Measured local ELF 24.22 -> 12.00 MiB (50.5% smaller); DEB/RPM 7.79 -> 5.28/5.29 MiB (32.2% smaller); AppImage 102.98 -> 100.82 MiB. Old broad upload selected 450 local files / 252.40 MiB summed deflate-6 payload; new uploads select three installers / 111.39 MiB total (ZIP metadata excluded). These are same-host local measurements, not the Ubuntu CI archive. Full sizes/hashes/method in docs/evidence/linux-bundle-size.json.
+
+Lint/typecheck, 115 frontend tests + coverage/CRAP 8, 24 Rust tests, fmt/clippy, frontend/native build and git diff --check pass. Parsed YAML and exercised upload globs against actual outputs: exactly one of each Linux installer, no staging files. Build used PATH=/tmp/omnia-build-tools/usr/bin:$PATH CARGO_BUILD_JOBS=3 npm run native:build; release compilation 7m45s. Optimized AppImage extract-and-run with private XDG/client identity rendered sign-in and closed with exit 0/no fatal diagnostics, using explicit WEBKIT_DISABLE_DMABUF_RENDERER=1. Initial launch helper used obsolete Hyprland close syntax; corrected helper and repeated successfully. No installer installed, account signed in, settings changed or push performed. Windows/macOS optimized builds and new CI upload sizes await CI; default NVIDIA shutdown issue remains. Full native fixture suite was not repeated for packaging-only changes. Next: run CI to measure Ubuntu artifacts and validate other-platform release profiles.
+
 ## Current Linux status — 2026-10-19
 
 Implemented and committed locally: a8ddbea (GTK geometry/focus, deferred profile cleanup, XDG autostart, native driver), 9b3f56a (square bundle icon/strict exit checks), ec3ad04 (renderer/exit diagnostics). Original target HEAD 393b712 was clean and descends from f3fc07d. Read-only ../omnia-reference-linux is current upstream main 4c76ff5bd8d574448ec2c99d890373a64059c287, unchanged product baseline.

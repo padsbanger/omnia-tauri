@@ -66,9 +66,40 @@ jobs:
           name: omnia-Linux-native-evidence
           path: reports/native-linux.json
           if-no-files-found: warn
-      - uses: actions/upload-artifact@v4
+      # Upload installers only, never AppDir or other unpacked staging trees.
+      # Each Linux format is separate so users download only the one they need.
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnia-Linux-deb
+          path: src-tauri/target/release/bundle/deb/*.deb
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnia-Linux-rpm
+          path: src-tauri/target/release/bundle/rpm/*.rpm
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+      - if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: omnia-Linux-AppImage
+          path: src-tauri/target/release/bundle/appimage/*.AppImage
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+      - if: runner.os != 'Linux'
+        uses: actions/upload-artifact@v4
         with:
           name: omnia-${{ runner.os }}
-          path: src-tauri/target/release/bundle/**
+          path: |
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/nsis/*.exe
+            src-tauri/target/release/bundle/dmg/*.dmg
+          compression-level: 0
           if-no-files-found: error
           retention-days: 7

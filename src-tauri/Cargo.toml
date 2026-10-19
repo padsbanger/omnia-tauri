@@ -4,6 +4,15 @@ version = "0.11.0"
 edition = "2021"
 rust-version = "1.98"
 license = "MIT"
+
+# Keep development builds fast; optimize shipped binaries for size. Preserve
+# panic unwinding so this does not change error/cleanup behavior.
+[profile.release]
+opt-level = "s"
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
 [build-dependencies]
 tauri-build = { version = "=2.7.3", features = [] }
 [dependencies]
