@@ -205,6 +205,9 @@ fn main() {
                 tauri::WebviewUrl::App("index.html".into()),
             )
             .transparent(drawer_layer::LIVE_BACKDROP)
+            // Let the trusted shell handle HTML route dragging. Tauri's native
+            // file-drop handler otherwise intercepts HTML5 DnD on Windows.
+            .disable_drag_drop_handler()
             .data_directory(root.join("shell"))
             .on_navigation(security::shell_url)
             .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny);

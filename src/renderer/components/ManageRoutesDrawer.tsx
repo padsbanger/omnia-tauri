@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { routeAction } from "../actions";
 import { Button } from "@heroui/react";
-import { MdClose } from "react-icons/md";
+import { MdClose, MdDragIndicator } from "react-icons/md";
+import { useRouteReordering } from "../routeReordering";
 
 import { WindowLayout } from "../../common/drawer";
 import { Route } from "../../common/routes";
@@ -34,6 +35,7 @@ const ManageRoutesDrawer = ({
 }: ManageRoutesDrawerProps) => {
   const store = useAppStore();
   const routes = routesProp ?? store.routes;
+  const drag = useRouteReordering(routes.map((route) => route.id));
   const activeTab = activeTabProp ?? store.activeTab;
   const windowLayout = windowLayoutProp ?? store.windowLayout;
   const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
@@ -129,28 +131,49 @@ const ManageRoutesDrawer = ({
           </div>
         ) : (
           routes.map((route) => (
-            <ManageRouteCard
-              editingLabel={editingLabel}
-              isEditing={editingRouteId === route.id}
-              isActive={activeTab === route.id}
-              isOffline={isOffline}
-              isSaving={savingRouteId === route.id}
+            <div
               key={route.id}
-              labelError={routeLabelError}
-              onBeginEditing={beginEditingRoute}
-              onCancelEditing={cancelEditingRoute}
-              onChangeLabel={setEditingLabel}
-              onCommitLabel={(item) => void commitRouteLabel(item)}
-              onDelete={(routeId) => void handleDeleteRoute(routeId)}
-              onToggleHibernation={(routeId) =>
-                void handleToggleHibernation(routeId)
-              }
-              onZoomRoute={(route, direction) =>
-                void handleRouteZoom(route, direction)
-              }
-              route={route}
-              zoomLevel={routeZoomLevels[route.id] ?? route.zoomLevel ?? 0}
-            />
+              {...drag.dropProps(route.id)}
+              className={`route-reorder-item shrink-0 ${drag.dragged === route.id ? "opacity-50" : ""}`}
+            >
+              <ManageRouteCard
+                dragHandle={
+                  <button
+                    type="button"
+                    aria-label={`Reorder ${route.label}`}
+                    aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+                    title="Drag to reorder. Alt+Up/Down also moves this route."
+                    disabled={drag.busy}
+                    draggable={!drag.busy}
+                    onDragStart={(event) => drag.start(event, route.id)}
+                    onDragEnd={drag.clear}
+                    onKeyDown={(event) => drag.keyboard(event, route.id)}
+                    className="mt-2 cursor-grab rounded text-slate-400 hover:text-slate-700 active:cursor-grabbing disabled:cursor-wait"
+                  >
+                    <MdDragIndicator className="text-xl" />
+                  </button>
+                }
+                editingLabel={editingLabel}
+                isEditing={editingRouteId === route.id}
+                isActive={activeTab === route.id}
+                isOffline={isOffline}
+                isSaving={savingRouteId === route.id}
+                labelError={routeLabelError}
+                onBeginEditing={beginEditingRoute}
+                onCancelEditing={cancelEditingRoute}
+                onChangeLabel={setEditingLabel}
+                onCommitLabel={(item) => void commitRouteLabel(item)}
+                onDelete={(routeId) => void handleDeleteRoute(routeId)}
+                onToggleHibernation={(routeId) =>
+                  void handleToggleHibernation(routeId)
+                }
+                onZoomRoute={(route, direction) =>
+                  void handleRouteZoom(route, direction)
+                }
+                route={route}
+                zoomLevel={routeZoomLevels[route.id] ?? route.zoomLevel ?? 0}
+              />
+            </div>
           ))
         )}
         {routes.length > 0 && (

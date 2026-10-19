@@ -9,6 +9,7 @@ type AppState = {
   activeDrawer: DrawerKind | null;
   windowLayout: WindowLayout;
   isOffline: boolean;
+  isReordering: boolean;
   unreadCounts: Record<string, number>;
   error: string | null;
   apply: (workspace: Workspace) => void;
@@ -27,6 +28,7 @@ export const useAppStore = create<AppState>((set) => ({
   activeDrawer: null,
   windowLayout: "single",
   isOffline: false,
+  isReordering: false,
   unreadCounts: {},
   error: null,
   apply: (workspace) =>
@@ -58,6 +60,7 @@ export const useAppStore = create<AppState>((set) => ({
       routes: [],
       activeTab: null,
       activeDrawer: null,
+      isReordering: false,
       unreadCounts: {},
       error: null,
     }),

@@ -50,6 +50,8 @@ Tauri `2.12.4` explicitly enables its `unstable` multiwebview feature; `tauri-bu
 
 On Windows, drawers render in the transparent trusted shell, raised above the native route views. Websites remain visible and live beneath the translucent backdrop; closing the drawer restores website focus without recreating views. Linux/macOS retain the hide/show drawer path pending native compositing verification. All non-hibernated routes are retained, including background routes. Memory displays are omitted; no performance advantage is asserted.
 
+Drag a service in the sidebar, or its grip in Manage routes, to reorder it. The blue line marks insertion before/after a route. Alt+Up/Down also moves a focused route or grip. Order is saved locally and to the backend when online; offline changes stay local without a queued server sync.
+
 ## Configuration
 
 Runtime environment overrides `config.json` in the app data root, which overrides hosted defaults. `.env` is not automatically read or shipped. Use an explicit launch environment for development or place the JSON file beside the application's caches for packaged deployments.

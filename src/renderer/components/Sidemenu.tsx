@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { WindowIcon } from "./WindowIcon";
-import { useState, type DragEvent } from "react";
 import { Button, Tooltip } from "@heroui/react";
 import { MdAdd, MdLogout, MdOutlineBedtime, MdTune } from "react-icons/md";
 import { useAppStore, useAuthStore } from "../store";
-import { reorder, signOut } from "../actions";
+import { signOut } from "../actions";
+import { useRouteReordering } from "../routeReordering";
 import WorkspaceLayoutSwitcher from "./WorkspaceLayoutSwitcher";
 
 const Sidemenu = () => {
@@ -20,27 +20,7 @@ const Sidemenu = () => {
     setError,
   } = useAppStore();
   const { user } = useAuthStore();
-  const [draggedRouteId, setDraggedRouteId] = useState<string | null>(null);
-  const [dragOverRouteId, setDragOverRouteId] = useState<string | null>(null);
-  const handleDragStart = setDraggedRouteId;
-  const handleDragOver = (event: DragEvent<HTMLDivElement>, id: string) => {
-    event.preventDefault();
-    setDragOverRouteId(id);
-  };
-  const handleDragEnd = () => {
-    setDraggedRouteId(null);
-    setDragOverRouteId(null);
-  };
-  const handleDrop = (target: string) => {
-    const ids = routes.map((r) => r.id);
-    const from = ids.indexOf(draggedRouteId ?? "");
-    const to = ids.indexOf(target);
-    if (from < 0 || to < 0 || from === to) return;
-    const [moved] = ids.splice(from, 1);
-    ids.splice(to, 0, moved);
-    void reorder(ids).catch((e) => setError(String(e)));
-    handleDragEnd();
-  };
+  const drag = useRouteReordering(routes.map((route) => route.id));
   const handleLogout = () => {
     void signOut().catch((e) => setError(String(e)));
   };
@@ -88,24 +68,24 @@ const Sidemenu = () => {
           return (
             <div
               key={route.id}
-              draggable
-              onDragStart={() => handleDragStart(route.id)}
-              onDragOver={(event) => handleDragOver(event, route.id)}
-              onDrop={() => handleDrop(route.id)}
-              onDragEnd={handleDragEnd}
-              className="w-full"
+              draggable={!drag.busy}
+              onDragStart={(event) => drag.start(event, route.id)}
+              onDragEnd={drag.clear}
+              {...drag.dropProps(route.id)}
+              className="route-reorder-item w-full shrink-0"
             >
-              {dragOverRouteId === route.id && draggedRouteId !== route.id && (
-                <div className="mx-1 my-1 h-10 rounded-xl border border-dashed border-blue-400/70 bg-blue-400/10" />
-              )}
               <Link
                 to={route.path}
+                draggable={false}
+                title="Drag to reorder. Alt+Up/Down also moves this route."
+                aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
+                onKeyDown={(event) => drag.keyboard(event, route.id)}
                 onClick={() => setActiveTab(route.id)}
                 className={`group relative flex w-full cursor-grab flex-col items-center gap-2 rounded-2xl px-2 py-3 text-center transition-all duration-200 active:cursor-grabbing ${
                   isActive
                     ? "bg-white/[0.11] text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08),0_8px_24px_rgba(0,0,0,0.16)]"
                     : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-100"
-                } ${draggedRouteId === route.id ? "scale-95 opacity-50" : "opacity-100"}`}
+                } ${drag.dragged === route.id ? "scale-95 opacity-50" : "opacity-100"}`}
               >
                 {isActive && (
                   <span className="absolute -left-2 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r-full bg-blue-400 shadow-[0_0_12px_rgba(96,165,250,0.65)]" />

@@ -14,6 +14,7 @@ import { Route } from "../../common/routes";
 import { WindowIcon } from "./WindowIcon";
 
 type ManageRouteCardProps = {
+  dragHandle?: React.ReactNode;
   route: Route;
   isEditing: boolean;
   editingLabel: string;
@@ -250,6 +251,7 @@ const ManageRouteCard = (props: ManageRouteCardProps) => (
       <span className="absolute inset-y-4 left-0 w-0.5 rounded-r-full bg-blue-500" />
     ) : null}
     <div className="flex min-w-0 items-start gap-3">
+      {props.dragHandle}
       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 text-slate-900 ring-1 ring-slate-200/70">
         <WindowIcon
           className="text-2xl"

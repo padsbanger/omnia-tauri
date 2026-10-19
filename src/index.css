@@ -44,6 +44,22 @@ body {
   scrollbar-width: thin;
 }
 
+.route-reorder-item { position: relative; }
+.route-reorder-item[data-drop-position]::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 2px;
+  background: #60a5fa;
+  box-shadow: 0 0 6px #3b82f680;
+}
+.route-reorder-item[data-drop-position="before"]::after { top: -3px; }
+.route-reorder-item[data-drop-position="after"]::after { bottom: -3px; }
+
 html.native-drawer-open,
 .native-drawer-open body {
   background: transparent;

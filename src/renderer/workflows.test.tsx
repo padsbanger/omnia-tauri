@@ -12,6 +12,16 @@ import { native, type Workspace } from "./native";
 import { useAppStore, useAuthStore } from "./store";
 import { routeAction, reorder, signOut } from "./actions";
 import type { Route } from "../common/routes";
+import { insertRoute } from "./routeReordering";
+function dragEvent(element: Element, type: string, clientY = 500) {
+  fireEvent(
+    element,
+    Object.assign(new Event(type, { bubbles: true, cancelable: true }), {
+      clientY,
+      dataTransfer: { setData: vi.fn(), effectAllowed: "", dropEffect: "" },
+    }),
+  );
+}
 vi.mock("./native", async (importOriginal) => {
   const original = await importOriginal<typeof import("./native")>();
   return {
@@ -97,19 +107,33 @@ describe("retained Omnia workflows", () => {
   it("enables live drawer transparency only after native layout and removes it on close", async () => {
     const user = userEvent.setup();
     render(<App />);
-    await user.click(await screen.findByRole("button", { name: "Manage routes" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Manage routes" }),
+    );
     await screen.findByRole("heading", { name: "Manage routes" });
-    await waitFor(() => expect(document.documentElement.classList.contains("native-drawer-open")).toBe(true));
+    await waitFor(() =>
+      expect(
+        document.documentElement.classList.contains("native-drawer-open"),
+      ).toBe(true),
+    );
     await user.keyboard("{Escape}");
-    await waitFor(() => expect(document.documentElement.classList.contains("native-drawer-open")).toBe(false));
+    await waitFor(() =>
+      expect(
+        document.documentElement.classList.contains("native-drawer-open"),
+      ).toBe(false),
+    );
   });
   it("retains an opaque shell on engines without live drawer compositing", async () => {
     vi.mocked(native.layout).mockResolvedValue(false);
     const user = userEvent.setup();
     render(<App />);
-    await user.click(await screen.findByRole("button", { name: "Manage routes" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Manage routes" }),
+    );
     await screen.findByRole("heading", { name: "Manage routes" });
-    expect(document.documentElement.classList.contains("native-drawer-open")).toBe(false);
+    expect(
+      document.documentElement.classList.contains("native-drawer-open"),
+    ).toBe(false);
   });
   it("validates URLs before creating and preserves the form when a mutation fails", async () => {
     const user = userEvent.setup();
@@ -318,9 +342,9 @@ describe("retained Omnia workflows", () => {
     );
     const from = screen.getByRole("link", { name: "Work" }).parentElement!;
     const to = screen.getByRole("link", { name: "Personal" }).parentElement!;
-    fireEvent.dragStart(from);
-    fireEvent.dragOver(to);
-    fireEvent.drop(to);
+    dragEvent(from, "dragstart");
+    dragEvent(to, "dragover");
+    dragEvent(to, "drop");
     await waitFor(() => expect(native.update).toHaveBeenCalled());
     await user.click(screen.getAllByRole("button", { name: "Rename" })[0]);
     const input = screen.getByRole("textbox");
@@ -332,5 +356,85 @@ describe("retained Omnia workflows", () => {
     await screen.findByText("Error: Rename failed");
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(screen.queryByRole("textbox")).toBeNull();
+  });
+  it("inserts before or after a target without losing routes", () => {
+    expect(insertRoute(["a", "b", "c"], "a", { id: "c", after: true })).toEqual(
+      ["b", "c", "a"],
+    );
+    expect(
+      insertRoute(["a", "b", "c"], "c", { id: "a", after: false }),
+    ).toEqual(["c", "a", "b"]);
+    expect(insertRoute(["a", "b"], "a", { id: "a", after: true })).toEqual([
+      "a",
+      "b",
+    ]);
+    expect(
+      insertRoute(["a", "b"], "unknown", { id: "a", after: false }),
+    ).toEqual(["a", "b"]);
+    expect(
+      insertRoute(["a", "b"], "a", { id: "unknown", after: false }),
+    ).toEqual(["a", "b"]);
+  });
+  it("reorders drawer cards with a handle, preserves selection and supports keyboard movement", async () => {
+    const user = userEvent.setup();
+    render(<ManageRoutesDrawer closeDrawer={vi.fn()} />);
+    const handle = screen.getByRole("button", { name: "Reorder Personal" });
+    const target = screen
+      .getByRole("button", { name: "Reorder Work" })
+      .closest(".route-reorder-item")!;
+    dragEvent(handle, "dragstart");
+    dragEvent(target, "dragover", 0);
+    expect(target.getAttribute("data-drop-position")).toBe("before");
+    dragEvent(target, "drop", 0);
+    await waitFor(() =>
+      expect(useAppStore.getState().isReordering).toBe(false),
+    );
+    expect(useAppStore.getState().routes.map((r) => r.id)).toEqual(["b", "a"]);
+    expect(useAppStore.getState().activeTab).toBe("a");
+    expect(native.preferences).toHaveBeenCalledWith("a", "single", ["b", "a"]);
+    handle.focus();
+    await user.keyboard("{Alt>}{ArrowDown}{/Alt}");
+    await waitFor(() =>
+      expect(useAppStore.getState().routes.map((r) => r.id)).toEqual([
+        "a",
+        "b",
+      ]),
+    );
+  });
+  it("ignores external drops and cancelled drags", () => {
+    render(
+      <HashRouter>
+        <Sidemenu />
+      </HashRouter>,
+    );
+    const from = screen.getByRole("link", { name: "Work" }).parentElement!;
+    const to = screen.getByRole("link", { name: "Personal" }).parentElement!;
+    dragEvent(to, "dragover");
+    dragEvent(to, "drop");
+    expect(native.preferences).not.toHaveBeenCalled();
+    dragEvent(from, "dragstart");
+    dragEvent(to, "dragover");
+    dragEvent(from, "dragend");
+    expect(to.getAttribute("data-drop-position")).toBeNull();
+    dragEvent(to, "drop");
+    expect(native.preferences).not.toHaveBeenCalled();
+  });
+  it("rejects incomplete orders and prevents overlapping saves", async () => {
+    await expect(reorder(["a", "a"])).rejects.toThrow("exactly once");
+    let finish!: () => void;
+    vi.mocked(native.preferences).mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const pending = reorder(["b", "a"]);
+    expect(useAppStore.getState().isReordering).toBe(true);
+    await reorder(["a", "b"]);
+    expect(native.preferences).toHaveBeenCalledTimes(1);
+    finish();
+    await pending;
+    expect(useAppStore.getState().isReordering).toBe(false);
+    expect(useAppStore.getState().routes.map((r) => r.id)).toEqual(["b", "a"]);
   });
 });

@@ -21,17 +21,29 @@ export async function signOut() {
 }
 export async function reorder(ids: string[]) {
   const store = useAppStore.getState();
+  if (store.isReordering) return;
   const next = ids
     .map((id) => store.routes.find((r) => r.id === id)!)
     .filter(Boolean);
-  store.replaceRoutes(next);
-  await native.preferences(store.activeTab, store.windowLayout, ids);
-  if (store.isOffline) return;
+  if (next.length !== store.routes.length || new Set(ids).size !== next.length)
+    throw new Error("Route order must contain every route exactly once.");
+  useAppStore.setState({ isReordering: true });
+  try {
+    store.replaceRoutes(next);
+    await native.preferences(store.activeTab, store.windowLayout, ids);
+    if (!store.isOffline) await saveRouteOrder(ids);
+  } finally {
+    useAppStore.setState({ isReordering: false });
+  }
+}
+async function saveRouteOrder(ids: string[]) {
   try {
     for (const [order, id] of ids.entries()) await native.update(id, { order });
   } catch (error) {
-    store.setError(
-      `Some route positions may have been saved. Reconnect to reconcile: ${message(error)}`,
-    );
+    useAppStore
+      .getState()
+      .setError(
+        `Some route positions may have been saved. Reconnect to reconcile: ${message(error)}`,
+      );
   }
 }

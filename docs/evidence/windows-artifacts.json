@@ -6,18 +6,18 @@
                       {
                           "path":  "src-tauri/target/release/omnia-tauri.exe",
                           "bytes":  15678464,
-                          "sha256":  "3bc1294ee17ea0a56073bf0494f9a1546ff09373284faf78cd2f4d950efc41b5"
+                          "sha256":  "094573ceeeca7575532ea9e98ab9e0f7ad2da7bafa47bc87bdbc2f6393f3b524"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
-                          "bytes":  6230016,
-                          "sha256":  "d961932247ffc7e432f654eeb263eeaa8756d39e929c6ab7dbd6f99f519310ce"
+                          "bytes":  6234112,
+                          "sha256":  "7510463dab791cbb0f97ec91db1b8bfeeb0176bf05993ea495dba2c32f5312c4"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-                          "bytes":  4295193,
-                          "sha256":  "22a5777b8146232bc284f736389f2aac554b148a13da937d43d20ff274372dff"
+                          "bytes":  4298703,
+                          "sha256":  "6f8d8b600f4935491fb53f10f324613290046abcbe58363d308fd258a3e7cf7b"
                       }
                   ],
-    "note":  "Rebuilt after Windows live transparent drawer overlay; 30 native checks pass including composited live pixels, resize, dismissal and focus restoration"
+    "note":  "Rebuilt after native HTML drag-and-drop route reordering; 32 native checks pass including both lists, backend ordering, full-restart persistence and 50% drawer backdrop"
 }
