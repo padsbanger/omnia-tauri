@@ -1,5 +1,11 @@
 # Progress record
 
+## Versioned artifact names — 2026-10-19
+
+All Actions artifacts now use omnia-<app version>-<platform/format>, including native evidence. Prepare reads the checked-out package version on every run, checks Tauri/Cargo agreement and validates a safe version string before emitting it. Release-tag matching remains enforced. Release downloads select the same version prefix. Native installer filenames already contain the version and are preserved. README examples updated.
+
+Validated with actionlint 1.7.12 (shellcheck/pyflakes unavailable and disabled), Bash syntax checks and local version extraction/naming checks: ordinary/release/v-prefixed/prerelease builds, version mismatch and unsafe-version rejection, every upload name matching the release download pattern. git diff --check passes. Workflow/docs only; no application rebuild, push, dispatch or upload. Actual artifact creation awaits the next GitHub run.
+
 ## Release asset automation — 2026-10-19
 
 User asked how to include build artifacts in release 0.11.0. Read-only GitHub check confirms the release exists at ef28f11 with no uploaded assets. Updated Verify and build: release:published trigger plus optional manual release_tag input; prepare resolves the tag to one immutable commit for all checks/builds, verifies an existing release and matching package/Tauri/Cargo versions. Final upload job requires successful frontend + all native jobs, downloads this run's artifacts and uploads only six installer formats with gh release upload --clobber. Only that job has contents:write; ordinary verification never uploads. No release creation, tag movement or note edits.

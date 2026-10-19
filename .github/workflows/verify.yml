@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       commit: ${{ steps.source.outputs.commit }}
+      version: ${{ steps.source.outputs.version }}
       release_tag: ${{ steps.source.outputs.release_tag }}
     steps:
       - uses: actions/checkout@v4
@@ -33,16 +34,23 @@ jobs:
           if [[ -n "$RELEASE_TAG" ]]; then
             git check-ref-format "refs/tags/$RELEASE_TAG"
             test "$(gh release view "$RELEASE_TAG" --json tagName --jq .tagName)" = "$RELEASE_TAG"
-            python3 - <<'PY'
-          import json, os, tomllib
+          fi
+          python3 - <<'PY'
+          import json, os, re, tomllib
           from pathlib import Path
-          version = os.environ['RELEASE_TAG'].removeprefix('v')
           versions = [json.loads(Path(p).read_text())['version'] for p in ['package.json', 'src-tauri/tauri.conf.json']]
           versions.append(tomllib.loads(Path('src-tauri/Cargo.toml').read_text())['package']['version'])
+          version = versions[0]
+          if not isinstance(version, str) or not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?', version):
+              raise SystemExit('Invalid app version for artifact naming')
           if any(v != version for v in versions):
-              raise SystemExit(f'Release tag must match package, Tauri and Cargo versions: {versions}')
+              raise SystemExit(f'Package, Tauri and Cargo versions must match: {versions}')
+          tag = os.environ['RELEASE_TAG']
+          if tag and tag.removeprefix('v') != version:
+              raise SystemExit(f'Release tag must match app version: {version}')
+          with Path(os.environ['GITHUB_OUTPUT']).open('a') as output:
+              output.write(f'version={version}\n')
           PY
-          fi
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           echo "release_tag=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
   frontend:
@@ -107,7 +115,7 @@ jobs:
       - if: always() && runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: omnia-Linux-native-evidence
+          name: omnia-${{ needs.prepare.outputs.version }}-Linux-native-evidence
           path: reports/native-linux.json
           if-no-files-found: warn
       # Upload installers only, never AppDir or other unpacked staging trees.
@@ -115,7 +123,7 @@ jobs:
       - if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: omnia-Linux-deb
+          name: omnia-${{ needs.prepare.outputs.version }}-Linux-deb
           path: src-tauri/target/release/bundle/deb/*.deb
           compression-level: 0
           if-no-files-found: error
@@ -123,7 +131,7 @@ jobs:
       - if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: omnia-Linux-rpm
+          name: omnia-${{ needs.prepare.outputs.version }}-Linux-rpm
           path: src-tauri/target/release/bundle/rpm/*.rpm
           compression-level: 0
           if-no-files-found: error
@@ -131,7 +139,7 @@ jobs:
       - if: runner.os == 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: omnia-Linux-AppImage
+          name: omnia-${{ needs.prepare.outputs.version }}-Linux-AppImage
           path: src-tauri/target/release/bundle/appimage/*.AppImage
           compression-level: 0
           if-no-files-found: error
@@ -139,7 +147,7 @@ jobs:
       - if: runner.os != 'Linux'
         uses: actions/upload-artifact@v4
         with:
-          name: omnia-${{ runner.os }}
+          name: omnia-${{ needs.prepare.outputs.version }}-${{ runner.os }}
           path: |
             src-tauri/target/release/bundle/msi/*.msi
             src-tauri/target/release/bundle/nsis/*.exe
@@ -160,7 +168,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: omnia-*
+          pattern: omnia-${{ needs.prepare.outputs.version }}-*
           path: release-assets
       - name: Upload installers to the existing release
         env:
