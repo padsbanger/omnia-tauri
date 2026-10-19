@@ -1,0 +1,141 @@
+import { chromium } from 'playwright';
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:http';
+import { mkdir, writeFile } from 'node:fs/promises';
+import assert from 'node:assert/strict';
+import { setTimeout as delay } from 'node:timers/promises';
+import { mockBackend } from './mock-backend.mjs';
+
+if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
+const evidence = { platform: process.platform, started: new Date().toISOString(), checks: [] };
+const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
+const backend=mockBackend('http://127.0.0.1:7890');
+const fixture = createServer(async (req,res) => {
+  if(await backend.handle(req,res)) return;
+  if(req.url==='/favicon.png'){res.writeHead(200,{'Content-Type':'image/png'});res.end(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aQ2kAAAAASUVORK5CYII=','base64'));return;}
+  if (req.url === '/redirect') { res.writeHead(302, {Location:'http://localhost:7890/forbidden'}).end(); return; }
+  res.writeHead(200, {'Content-Type':'text/html', 'X-Frame-Options':'DENY'});
+  res.end(`<!doctype html><title>Fixture</title><link rel="icon" href="/favicon.png"><h1>Omnia native fixture</h1><input aria-label="Identity"><button id="save">Save identity</button><button id="popup">Popup</button><p id="identity"></p><script>
+  const identity=document.querySelector('#identity'); identity.textContent=localStorage.getItem('identity')||'empty';
+  document.querySelector('#save').onclick=()=>{const v=document.querySelector('input').value;localStorage.setItem('identity',v);document.cookie='identity='+v+'; Max-Age=86400; SameSite=Lax; Path=/';identity.textContent=v;};
+  document.querySelector('#popup').onclick=()=>window.open('/popup','fixture-popup','width=520,height=600');
+  </script>`);
+});
+await new Promise(r => fixture.listen(7890,'127.0.0.1',r));
+let app, shellBrowser, routeBrowsers=[];
+async function connect(port) {
+  let error;
+  for(let i=0;i<80;i++){try{return await chromium.connectOverCDP(`http://127.0.0.1:${port}`,{timeout:1500});}catch(e){error=e;await delay(250);}}
+  throw error;
+}
+async function launch(args=[]) {
+  app=spawn('src-tauri/target/debug/omnia-tauri.exe',args,{env:{...process.env,OMNIA_SMOKE:'1',OMNIA_API_BASE_URL:'http://127.0.0.1:7890',AUTHENTIK_DISCOVERY_URL:'http://127.0.0.1:7890/discovery',AUTHENTIK_CLIENT_ID:'native-fixture'},windowsHide:true,stdio:'pipe'});
+  app.stderr.on('data',b=>process.stderr.write(b));
+  shellBrowser=await connect(9222);
+  const page=shellBrowser.contexts()[0].pages()[0];
+  page.on('pageerror',error=>console.error('SHELL ERROR',String(error)));
+  page.on('console',message=>{if(message.type()==='error')console.error('SHELL CONSOLE',message.text());});
+  console.log('Shell URL',page.url());
+  await page.waitForFunction(()=>!!window.__TAURI_INTERNALS__);
+  await page.getByRole('button',{name:'Sign in',exact:true}).or(page.getByRole('button',{name:'Manage routes',exact:true})).first().waitFor({timeout:25000});
+  return page;
+}
+let revision=0, portA=9223;
+const invoke=(page,command,args={})=>page.evaluate(({command,args})=>window.__TAURI_INTERNALS__.invoke(command,args),{command,args});
+const bounds=(x,y,width,height)=>({x,y,width,height});
+const spread=[{routeId:'fixture-a',bounds:bounds(108,120,500,600)},{routeId:'fixture-b',bounds:bounds(608,120,500,600)}];
+const layout=(page,placements=spread,drawer=false)=>invoke(page,'layout_views',{revision:++revision,placements,drawer});
+const action=(page,id,action)=>invoke(page,'route_action',{id,action});
+async function routes(){routeBrowsers=await Promise.all([connect(portA),connect(9224)]);return Promise.all(routeBrowsers.map(async b=>{const p=b.contexts()[0].pages().find(p=>p.url().includes(':7890'))||b.contexts()[0].pages()[0];await p.waitForSelector('#identity');return p;}));}
+async function stop(){for(const b of routeBrowsers)await b.close().catch(()=>{});routeBrowsers=[];await shellBrowser?.close().catch(()=>{});if(app){app.kill();await delay(1500);}}
+try {
+  let shell=await launch();
+  await invoke(shell,'auth_logout');await shell.reload();await shell.getByRole('button',{name:'Sign in',exact:true}).waitFor();
+  await invoke(shell,'spike_seed');await layout(shell);
+  let [a,b]=await routes();
+  for(const [p,value] of [[a,'Alice'],[b,'Bob']]){await p.getByRole('textbox').fill(value);await p.locator('#save').click();}
+  assert.equal(await a.locator('#identity').textContent(),'Alice');assert.equal(await b.locator('#identity').textContent(),'Bob');
+  check('Two same-origin native profiles have independent localStorage and cookies');
+  assert.equal(await a.evaluate(()=>document.cookie.includes('identity=Alice')),true);assert.equal(await b.evaluate(()=>document.cookie.includes('identity=Bob')),true);
+  const measured=await invoke(shell,'smoke_inspect');
+  for(const p of spread){const v=measured.views.find(v=>v.id===p.routeId);assert.ok(Math.abs(v.width-p.bounds.width*measured.scale)<=1);assert.ok(Math.abs(v.x-p.bounds.x*measured.scale)<=1);assert.equal(v.visible,true);}
+  check('Measured native bounds follow logical-to-physical DPI conversion',measured);
+  const drm=await a.evaluate(async()=>{
+    const results={};for(const key of ['com.widevine.alpha','com.microsoft.playready.recommendation']){
+      try{await navigator.requestMediaKeySystemAccess(key,[{initDataTypes:['cenc'],videoCapabilities:[{contentType:'video/mp4; codecs="avc1.42E01E"'}],audioCapabilities:[{contentType:'audio/mp4; codecs="mp4a.40.2"'}]}]);results[key]='API accepted configuration';}
+      catch(error){results[key]=error.name;}
+    }return results;
+  });evidence.drmCapabilityProbe=drm;console.log('DRM capability probe (not playback)',drm);
+  const denial=await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('route_action',{id:'fixture-b',action:'clear_session'}).then(()=>false,()=>true));assert.equal(denial,true);check('Untrusted route denied privileged route action');
+  await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_signal',{count:0,source:'title'}));
+  assert.equal(await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_signal',{count:-1,source:'title'}).then(()=>false,()=>true)),true);
+  assert.equal(await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('page_favicon',{url:'file:///secret'}).then(()=>false,()=>true)),true);
+  const discovered=await action(shell,'fixture-a','focus');assert.equal(discovered.faviconUrl,'http://127.0.0.1:7890/favicon.png');check('Native favicon discovery and malformed hint rejection');
+  await a.evaluate(()=>document.title='(7) Fixture');await delay(500);const unread=await invoke(shell,'unread_snapshot');assert.equal(unread.total,7);check('Native title unread signal',unread);
+  for(const placements of [[spread[0]],spread,[{routeId:'fixture-a',bounds:bounds(108,120,1000,290)},{routeId:'fixture-b',bounds:bounds(108,410,1000,290)}]]){await layout(shell,placements);}
+  await layout(shell,spread,true);assert.ok((await invoke(shell,'smoke_inspect')).views.every(v=>v.visible===false));await layout(shell);await action(shell,'fixture-a','focus');
+  check('Single/spread/matrix positioning, hide/show, drawer occlusion, focus commands');
+  const zoom=await action(shell,'fixture-a','zoom_in');assert.equal(zoom.zoomLevel,0.5);await action(shell,'fixture-a','refresh');await a.waitForSelector('#identity');assert.equal(await a.locator('#identity').textContent(),'Alice');check('Refresh and Electron-equivalent zoom scale');
+  await a.locator('#popup').click();await delay(1000);
+  const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
+  const popup=popupBrowser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/popup'));
+  assert.ok(popup,'Popup target must exist');await popup.waitForSelector('#identity');assert.equal(await popup.locator('#identity').textContent(),'Alice');
+  assert.equal(await popup.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);await popup.close();check('Popup shares originating profile and denies privileged command');
+  await action(shell,'fixture-a','hibernate');await action(shell,'fixture-a','restore');await layout(shell);
+  [a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'Alice');check('Hibernate destroys view; restore retains session');
+  await stop();shell=await launch();await invoke(shell,'spike_seed');await layout(shell);[a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'Alice');assert.equal(await b.locator('#identity').textContent(),'Bob');check('Full application restart retains both isolated identities');
+  const cleared=await action(shell,'fixture-a','clear_session');portA=9223+cleared.epoch*2;await layout(shell);[a,b]=await routes();assert.equal(await a.locator('#identity').textContent(),'empty');assert.equal(await b.locator('#identity').textContent(),'Bob');check('Targeted clear resets only profile A');
+  await a.evaluate(()=>location.href='/redirect');await delay(700);assert.ok(!a.url().includes('/forbidden'));check('Redirect to disallowed hostname intercepted');
+  await mkdir('reports',{recursive:true});await shell.screenshot({path:'reports/native-shell.png'});
+  await stop();portA=9223;shell=await launch();
+  await invoke(shell,'auth_logout');await shell.reload();
+  backend.state.discoveryDelay=3000;
+  const pendingLogin=invoke(shell,'auth_login').then(()=>false,()=>true);
+  await delay(250);const cancelledAt=Date.now();await invoke(shell,'auth_cancel');
+  assert.equal(await pendingLogin,true);assert.ok(Date.now()-cancelledAt<2000);
+  backend.state.discoveryDelay=0;check('Sign-in cancellation interrupts in-flight discovery without waiting for its timeout');
+  await shell.getByRole('button',{name:'Sign in',exact:true}).click();
+  await shell.getByRole('button',{name:'Manage routes',exact:true}).waitFor({timeout:25000});
+  check('Native OIDC PKCE exchange, OS credential storage and production route-list contract against local fixture');
+  await shell.getByRole('button',{name:'Manage routes',exact:true}).click();
+  await shell.getByRole('heading',{name:'Manage routes'}).waitFor();
+  assert.ok(await shell.getByText('Memory unavailable').count());
+  await shell.getByRole('button',{name:'Rename',exact:true}).first().click();
+  await shell.getByRole('textbox').fill('Renamed A');await shell.getByRole('button',{name:'Save',exact:true}).click();
+  await shell.getByText('Renamed A',{exact:true}).first().waitFor();assert.equal(backend.state.routes[0].name,'Renamed A');
+  await shell.getByRole('button',{name:'Hibernate',exact:true}).first().click();await shell.getByRole('button',{name:'Restore',exact:true}).first().waitFor();
+  await shell.getByRole('button',{name:'Restore',exact:true}).first().click();
+  await shell.getByRole('button',{name:'Close manage routes'}).click();
+  await shell.getByRole('button',{name:'Columns layout',exact:true}).click();
+  await shell.getByRole('button',{name:'Matrix layout',exact:true}).click();
+  await shell.getByRole('button',{name:'Single layout',exact:true}).click();
+  check('Retained React drawer, rename/PATCH, hibernation and all three layout controls operate on native views');
+  await shell.getByRole('button',{name:'Add route',exact:true}).first().click();
+  await shell.getByLabel('Label',{exact:true}).fill('Created site');
+  await shell.getByRole('combobox').selectOption('link');
+  await shell.getByLabel('URL',{exact:true}).fill('http://127.0.0.1:7890/created');
+  await shell.getByRole('button',{name:'Save route',exact:true}).click();
+  await shell.getByRole('link',{name:'Created site',exact:true}).waitFor();assert.equal(backend.state.routes.length,3);
+  await shell.getByRole('button',{name:'Manage routes',exact:true}).click();
+  await shell.getByRole('button',{name:'Delete route',exact:true}).last().click();
+  await delay(300);assert.equal(backend.state.routes.length,2);check('Create/POST metadata and delete/204 through retained UI');
+  backend.state.offline=true;
+  const offline=await invoke(shell,'workspace_bootstrap');assert.equal(offline.isOffline,true);assert.equal(offline.routes.length,2);
+  backend.state.offline=false;const online=await invoke(shell,'workspace_bootstrap');assert.equal(online.isOffline,false);check('Temporary route API outage uses account-scoped cache and reconciles on recovery');
+  await stop();shell=await launch();await shell.getByRole('button',{name:'Manage routes',exact:true}).waitFor({timeout:25000});assert.ok(backend.state.refreshes>0);check('Cold startup refreshes OS-stored credentials and restores workspace');
+  const persisted=await shell.evaluate(()=>JSON.stringify(localStorage));assert.ok(!persisted.includes('fixture-access')&&!persisted.includes('fixture-refresh'));check('Raw tokens absent from frontend localStorage');
+  backend.state.invalid=true;
+  assert.equal(await invoke(shell,'workspace_bootstrap').then(()=>false,()=>true),true);
+  assert.equal((await invoke(shell,'workspace_bootstrap')).user,null);backend.state.invalid=false;check('Invalid authentication clears session instead of exposing offline cache');
+  backend.state.holdAuthorization=true;backend.state.code=null;await shell.reload();await shell.getByRole('button',{name:'Sign in',exact:true}).click();
+  for(let i=0;i<100&&!backend.state.code;i++)await delay(50);assert.ok(backend.state.code);
+  const callback='omnia://auth/callback?code=fixture-code&state='+backend.state.code.state;
+  await stop();shell=await launch([callback]);await shell.getByRole('button',{name:'Manage routes',exact:true}).waitFor({timeout:25000});check('Cold-start callback consumes OS-stored pending state');
+  const exchanged=backend.state.requests.filter(r=>r.grant==='authorization_code').length;
+  const replay=spawn('src-tauri/target/debug/omnia-tauri.exe',[callback],{env:{...process.env,OMNIA_SMOKE:'1'},windowsHide:true,stdio:'ignore'});await new Promise(resolve=>replay.once('exit',resolve));await delay(300);
+  assert.equal(backend.state.requests.filter(r=>r.grant==='authorization_code').length,exchanged);check('Already-running instance rejects replayed callback without exchanging the code');
+  await invoke(shell,'auth_logout');
+  evidence.contractRequests=backend.state.requests;
+  evidence.passed=true;
+}catch(error){evidence.passed=false;evidence.error=String(error);console.error(error);try{const page=shellBrowser.contexts()[0].pages()[0];console.error('SHELL',await page.locator('body').innerText());console.error('REQUESTS',JSON.stringify(backend.state.requests));await page.screenshot({path:'reports/native-failure.png'});}catch{}process.exitCode=1;}
+finally{await stop();fixture.close();await mkdir('reports',{recursive:true});await writeFile('reports/native-smoke.json',JSON.stringify(evidence,null,2));}

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-route-update"
+description = "Enables the route_update command without any pre-configured scope."
+commands.allow = ["route_update"]
+
+[[permission]]
+identifier = "deny-route-update"
+description = "Denies the route_update command without any pre-configured scope."
+commands.deny = ["route_update"]

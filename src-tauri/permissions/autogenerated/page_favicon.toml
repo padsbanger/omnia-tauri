@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-page-favicon"
+description = "Enables the page_favicon command without any pre-configured scope."
+commands.allow = ["page_favicon"]
+
+[[permission]]
+identifier = "deny-page-favicon"
+description = "Denies the page_favicon command without any pre-configured scope."
+commands.deny = ["page_favicon"]

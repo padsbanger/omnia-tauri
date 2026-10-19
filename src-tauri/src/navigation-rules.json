@@ -1,0 +1,214 @@
+[
+  {
+    "icon": "claude",
+    "internalHosts": [
+      "claude.ai",
+      "anthropic.com"
+    ],
+    "hostSuffixes": [
+      "claude.ai",
+      "anthropic.com"
+    ]
+  },
+  {
+    "icon": "chatgpt",
+    "internalHosts": [
+      "chatgpt.com",
+      "chat.openai.com",
+      "auth.openai.com",
+      "openai.com",
+      "oaistatic.com",
+      "oaiusercontent.com"
+    ],
+    "hostSuffixes": [
+      "chatgpt.com",
+      "openai.com"
+    ]
+  },
+  {
+    "icon": "gmail",
+    "internalHosts": [
+      "mail.google.com",
+      "accounts.google.com",
+      "google.com",
+      "googleapis.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ],
+    "hostSuffixes": [
+      "google.com",
+      "gmail.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ]
+  },
+  {
+    "icon": "discord",
+    "internalHosts": [
+      "discord.com",
+      "discordapp.com"
+    ],
+    "hostSuffixes": [
+      "discord.com"
+    ]
+  },
+  {
+    "icon": "slack",
+    "internalHosts": [
+      "slack.com",
+      "app.slack.com",
+      "slack-edge.com",
+      "slack-imgs.com",
+      "slackb.com",
+      "slack-files.com",
+      "mail.google.com",
+      "accounts.google.com",
+      "google.com",
+      "googleapis.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ],
+    "hostSuffixes": [
+      "slack.com"
+    ]
+  },
+  {
+    "icon": "telegram",
+    "internalHosts": [
+      "telegram.org",
+      "telegram.me",
+      "t.me",
+      "telegra.ph"
+    ],
+    "hostSuffixes": [
+      "telegram.org",
+      "telegram.me",
+      "telegra.ph"
+    ],
+    "exactHosts": [
+      "t.me"
+    ]
+  },
+  {
+    "icon": "whatsapp",
+    "internalHosts": [
+      "whatsapp.com",
+      "web.whatsapp.com",
+      "wa.me",
+      "whatsapp.net",
+      "static.whatsapp.net"
+    ],
+    "hostSuffixes": [
+      "whatsapp.com",
+      "whatsapp.net"
+    ],
+    "exactHosts": [
+      "wa.me"
+    ]
+  },
+  {
+    "icon": "teams",
+    "internalHosts": [
+      "teams.microsoft.com",
+      "teams.live.com",
+      "login.microsoftonline.com",
+      "login.live.com",
+      "office.com",
+      "office.net",
+      "office365.com",
+      "microsoft.com",
+      "microsoftonline.com",
+      "msauth.net",
+      "msftauth.net",
+      "microsoft365.com"
+    ],
+    "hostSuffixes": [
+      "teams.microsoft.com",
+      "teams.live.com",
+      "microsoftonline.com",
+      "office.com"
+    ]
+  },
+  {
+    "icon": "facebook",
+    "internalHosts": [
+      "facebook.com",
+      "messenger.com",
+      "fbcdn.net",
+      "fbsbx.com"
+    ],
+    "hostSuffixes": [
+      "facebook.com",
+      "messenger.com"
+    ]
+  },
+  {
+    "icon": "tradingview",
+    "internalHosts": [
+      "tradingview.com",
+      "sso.tradingview.com",
+      "facebook.com",
+      "messenger.com",
+      "fbcdn.net",
+      "fbsbx.com",
+      "twitter.com",
+      "x.com",
+      "t.co",
+      "twimg.com",
+      "mail.google.com",
+      "accounts.google.com",
+      "google.com",
+      "googleapis.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ],
+    "hostSuffixes": [
+      "tradingview.com"
+    ]
+  },
+  {
+    "icon": "twitter",
+    "internalHosts": [
+      "twitter.com",
+      "x.com",
+      "t.co",
+      "twimg.com",
+      "mail.google.com",
+      "accounts.google.com",
+      "google.com",
+      "googleapis.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ],
+    "hostSuffixes": [
+      "twitter.com",
+      "x.com"
+    ]
+  },
+  {
+    "icon": "spotify",
+    "internalHosts": [
+      "open.spotify.com",
+      "spotify.com",
+      "spotifycdn.com",
+      "spotifyads.com",
+      "facebook.com",
+      "messenger.com",
+      "fbcdn.net",
+      "fbsbx.com",
+      "twitter.com",
+      "x.com",
+      "t.co",
+      "twimg.com",
+      "mail.google.com",
+      "accounts.google.com",
+      "google.com",
+      "googleapis.com",
+      "googleusercontent.com",
+      "gstatic.com"
+    ],
+    "hostSuffixes": [
+      "spotify.com"
+    ]
+  }
+]

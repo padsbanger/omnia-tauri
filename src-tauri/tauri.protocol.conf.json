@@ -1,0 +1,5 @@
+{
+  "plugins": {
+    "deep-link": { "desktop": { "schemes": ["omnia"] } }
+  }
+}

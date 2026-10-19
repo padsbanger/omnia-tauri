@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-smoke-inspect"
+description = "Enables the smoke_inspect command without any pre-configured scope."
+commands.allow = ["smoke_inspect"]
+
+[[permission]]
+identifier = "deny-smoke-inspect"
+description = "Denies the smoke_inspect command without any pre-configured scope."
+commands.deny = ["smoke_inspect"]

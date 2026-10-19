@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-route-create"
+description = "Enables the route_create command without any pre-configured scope."
+commands.allow = ["route_create"]
+
+[[permission]]
+identifier = "deny-route-create"
+description = "Denies the route_create command without any pre-configured scope."
+commands.deny = ["route_create"]

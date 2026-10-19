@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-page-signal"
+description = "Enables the page_signal command without any pre-configured scope."
+commands.allow = ["page_signal"]
+
+[[permission]]
+identifier = "deny-page-signal"
+description = "Denies the page_signal command without any pre-configured scope."
+commands.deny = ["page_signal"]

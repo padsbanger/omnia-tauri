@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-workspace-preferences"
+description = "Enables the workspace_preferences command without any pre-configured scope."
+commands.allow = ["workspace_preferences"]
+
+[[permission]]
+identifier = "deny-workspace-preferences"
+description = "Denies the workspace_preferences command without any pre-configured scope."
+commands.deny = ["workspace_preferences"]

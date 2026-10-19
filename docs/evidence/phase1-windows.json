@@ -1,0 +1,51 @@
+{
+  "platform": "win32",
+  "started": "2026-10-19T14:37:02.807Z",
+  "checks": [
+    {
+      "name": "Two same-origin native profiles have independent localStorage and cookies"
+    },
+    {
+      "name": "Untrusted route denied privileged route action"
+    },
+    {
+      "name": "Native title unread signal",
+      "unreadCounts": [
+        {
+          "routeId": "fixture-a",
+          "count": 7,
+          "source": "title"
+        },
+        {
+          "routeId": "fixture-b",
+          "count": 0,
+          "source": "title"
+        }
+      ],
+      "total": 7,
+      "revision": 3
+    },
+    {
+      "name": "Single/spread/matrix positioning, hide/show, drawer occlusion, focus commands"
+    },
+    {
+      "name": "Refresh and Electron-equivalent zoom scale"
+    },
+    {
+      "name": "Popup shares originating profile and denies privileged command"
+    },
+    {
+      "name": "Hibernate destroys view; restore retains session"
+    },
+    {
+      "name": "Full application restart retains both isolated identities"
+    },
+    {
+      "name": "Targeted clear resets only profile A"
+    },
+    {
+      "name": "Redirect to disallowed hostname intercepted"
+    }
+  ],
+  "passed": true
+}

@@ -1,0 +1,10 @@
+{
+  "identifier": "route-signal",
+  "description": "Untrusted route hints only; native label determines identity",
+  "webviews": ["route-*"],
+  "remote": {
+    "urls": ["http://*:*/*", "https://*:*/*"]
+  },
+  "local": false,
+  "permissions": ["allow-page-signal", "allow-page-favicon"]
+}

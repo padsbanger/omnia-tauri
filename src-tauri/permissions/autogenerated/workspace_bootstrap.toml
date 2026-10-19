@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-workspace-bootstrap"
+description = "Enables the workspace_bootstrap command without any pre-configured scope."
+commands.allow = ["workspace_bootstrap"]
+
+[[permission]]
+identifier = "deny-workspace-bootstrap"
+description = "Denies the workspace_bootstrap command without any pre-configured scope."
+commands.deny = ["workspace_bootstrap"]

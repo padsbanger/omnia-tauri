@@ -1,0 +1,22 @@
+{
+  "platform": "Windows x64",
+  "signed": false,
+  "installed": false,
+  "artifacts": [
+    {
+      "path": "src-tauri/target/release/omnia-tauri.exe",
+      "bytes": 15619584,
+      "sha256": "77eb2c913257af5588638b7596ca19e8dd956ef408d651f666039d428c2fed9e"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
+      "bytes": 6225920,
+      "sha256": "194fa51a0ea9b20f3841aac0fb1c5661ef0207b5cf34377718f782861b02cbac"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
+      "bytes": 4293378,
+      "sha256": "1719b97377845affa8054fc01b5c6fa0ca59b8b24b177b27d98e6bd968a4e869"
+    }
+  ]
+}

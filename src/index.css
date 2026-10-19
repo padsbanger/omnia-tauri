@@ -1,0 +1,200 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme {
+  --font-family-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-serif:
+    ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-family-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Monaco, Inconsolata, "Roboto Mono",
+    "Source Code Pro", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  width: 100vw;
+  height: 100vh;
+  min-width: 100vw;
+  min-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #f8fafc;
+  color: #0f172a;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+.omnia-scrollbar {
+  scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+  scrollbar-width: thin;
+}
+
+.omnia-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.omnia-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.omnia-scrollbar::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgba(148, 163, 184, 0.4);
+}
+
+.omnia-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.55);
+}
+
+.tooltip {
+  z-index: 100;
+  max-width: 14rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.625rem;
+  background: #0f172a;
+  padding: 0.375rem 0.625rem;
+  color: #f8fafc;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  overflow-wrap: break-word;
+  pointer-events: none;
+  white-space: normal;
+  word-break: normal;
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.2),
+    0 2px 8px rgba(15, 23, 42, 0.12);
+}
+
+.tooltip p {
+  color: inherit;
+}
+
+.omnia-auth-background {
+  background:
+    linear-gradient(135deg, rgba(38, 235, 232, 0.18) 0%, transparent 30%),
+    linear-gradient(
+      112deg,
+      transparent 18%,
+      rgba(42, 100, 255, 0.2) 42%,
+      rgba(124, 72, 255, 0.18) 63%,
+      transparent 82%
+    ),
+    linear-gradient(
+      155deg,
+      transparent 28%,
+      rgba(231, 43, 255, 0.22) 70%,
+      transparent 100%
+    ),
+    #0c0b18;
+  background-repeat: no-repeat;
+  background-size: cover, cover, cover, auto;
+  animation: omnia-auth-background-drift 64s ease-in-out infinite alternate;
+}
+
+.omnia-auth-background::before {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(
+      105deg,
+      transparent 0%,
+      rgba(97, 240, 255, 0.12) 42%,
+      rgba(231, 43, 255, 0.08) 50%,
+      transparent 62%
+    ),
+    linear-gradient(180deg, rgba(23, 22, 48, 0.18), rgba(8, 8, 18, 0.7));
+  background-position:
+    -120% 0,
+    0 0;
+  background-size:
+    240% 100%,
+    100% 100%;
+  animation: omnia-auth-sheen 14s linear infinite;
+}
+
+.omnia-auth-particle {
+  position: absolute;
+  width: var(--particle-size);
+  height: var(--particle-size);
+  border-radius: 9999px;
+  background: var(--particle-color);
+  box-shadow: 0 0 14px var(--particle-color);
+  opacity: 0;
+  transform: translate3d(0, 0, 0);
+  animation-name: omnia-auth-particle-flight;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes omnia-auth-background-drift {
+  from {
+    background-position:
+      0% 0%,
+      100% 20%,
+      0% 100%,
+      0 0;
+  }
+
+  to {
+    background-position:
+      100% 100%,
+      20% 80%,
+      100% 0%,
+      0 0;
+  }
+}
+
+@keyframes omnia-auth-sheen {
+  from {
+    background-position:
+      -120% 0,
+      0 0;
+  }
+
+  to {
+    background-position:
+      120% 0,
+      0 0;
+  }
+}
+
+@keyframes omnia-auth-particle-flight {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.65);
+  }
+
+  12% {
+    opacity: 0.62;
+  }
+
+  72% {
+    opacity: 0.46;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(
+        var(--particle-travel-x),
+        var(--particle-travel-y),
+        0
+      )
+      scale(1.15);
+  }
+}

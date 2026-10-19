@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-spike-seed"
+description = "Enables the spike_seed command without any pre-configured scope."
+commands.allow = ["spike_seed"]
+
+[[permission]]
+identifier = "deny-spike-seed"
+description = "Denies the spike_seed command without any pre-configured scope."
+commands.deny = ["spike_seed"]
