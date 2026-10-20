@@ -335,15 +335,16 @@
       retryDelay = Math.min(5000, retryDelay * 2);
       return;
     }
-    const [source, count] = pending.entries().next().value;
-    pending.delete(source);
+    const [key, value] = pending.entries().next().value;
+    const { source, count } = value;
+    pending.delete(key);
     sending = true;
     Promise.resolve().then(() => bridge.invoke("page_signal", { count, source }))
       .then(() => {
-        acknowledged.set(source, count);
+        acknowledged.set(key, value);
         retryDelay = 250;
       }, () => {
-        if (!pending.has(source)) pending.set(source, count);
+        if (!pending.has(key)) pending.set(key, value);
         retryDelay = Math.min(5000, retryDelay * 2);
       })
       .finally(() => {
@@ -353,8 +354,13 @@
   };
   const emit = (count, source) => {
     const normalizedCount = Math.max(0, Math.min(maxUnreadCount, Math.floor(count)));
-    if (acknowledged.get(source) === normalizedCount && !pending.has(source) && !sending) return;
-    pending.set(source, normalizedCount);
+    // Gmail DOM and title are alternate readings of the same count. A title
+    // zero must be delivered again after a DOM count, even if that same zero
+    // was acknowledged before. Coalesce retries across both readings too.
+    const key = source.startsWith("gmail-") ? "gmail" : source;
+    const previous = acknowledged.get(key);
+    if (previous?.count === normalizedCount && previous.source === source && !pending.has(key) && !sending) return;
+    pending.set(key, { source, count: normalizedCount });
     deliver();
   };
 

@@ -44,11 +44,12 @@ const bounds=(x,y,width,height)=>({x,y,width,height});
 const spread=[{routeId:'fixture-a',bounds:bounds(108,120,500,600)},{routeId:'fixture-b',bounds:bounds(608,120,500,600)}];
 const layout=(page,placements=spread,drawer=false)=>invoke(page,'layout_views',{revision:++revision,placements,drawer});
 const action=(page,id,action)=>invoke(page,'route_action',{id,action});
-async function waitUnread(page,id,count){
+async function waitUnread(page,id,count,source){
   let snapshot;
   for(let i=0;i<80;i++){
     snapshot=await invoke(page,'unread_snapshot');
-    if(snapshot.unreadCounts.find(entry=>entry.routeId===id)?.count===count)return snapshot;
+    const entry=snapshot.unreadCounts.find(entry=>entry.routeId===id);
+    if(entry?.count===count&&(!source||entry.source===source))return snapshot;
     await delay(100);
   }
   assert.fail(`Unread count for ${id} did not reach ${count}: ${JSON.stringify(snapshot)}`);
@@ -133,6 +134,19 @@ try {
   await a.locator('#fixture-count').evaluate(node=>{node.textContent='0';});
   await waitUnread(shell,'fixture-a',0);
   check('Injected Gmail DOM signals cross the HTTPS native boundary and clear unread counts');
+  await b.locator('#fixture-count').evaluate(node=>{node.textContent='0';});
+  await waitUnread(shell,'fixture-b',0);
+  await a.evaluate(()=>{document.title='Inbox - Gmail';document.querySelector('#fixture-count').remove();});
+  await waitUnread(shell,'fixture-a',0,'gmail-title');
+  for(let cycle=0;cycle<2;cycle++){
+    await a.evaluate(()=>{const badge=document.createElement('span');badge.id='fixture-count';badge.textContent='1';document.querySelector('nav div').append(badge);});
+    await waitUnread(shell,'fixture-a',1,'gmail-dom');
+    assert.equal((await invoke(shell,'smoke_inspect')).title,'(1) Omnia');
+    await a.locator('#fixture-count').evaluate(node=>node.remove());
+    await waitUnread(shell,'fixture-a',0,'gmail-title');
+    assert.equal((await invoke(shell,'smoke_inspect')).title,'Omnia');
+  }
+  check('Gmail last-unread badge removal clears the native total across repeated title-zero -> DOM-one -> title-zero transitions');
   await mkdir('reports',{recursive:true});await shell.screenshot({path:'reports/native-shell.png'});
   await stop();portA=9223;shell=await launch();
   await invoke(shell,'auth_logout');await shell.reload();

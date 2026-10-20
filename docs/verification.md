@@ -137,3 +137,11 @@ Final native build: `PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:bu
 `WEBKIT_DISABLE_DMABUF_RENDERER=1 GDK_BACKEND=wayland node scripts/native-smoke-linux.mjs` returns **0**: 22 checks, five clean process/stdio closures, no fatal diagnostics. [Evidence](evidence/native-linux-dmabuf-disabled.json) records the option, backend and scales. The comparison follows [Tauri's graphics guidance](https://v2.tauri.app/develop/debug/linux-graphics/). It does not establish a permanent fix for an intermittent NVIDIA/WebKit problem; default-renderer failure evidence is retained. No automatic app-wide override, driver change or security/sandbox bypass was introduced.
 
 The complete reproducible command `WEBKIT_DISABLE_DMABUF_RENDERER=1 GDK_BACKEND=wayland npm run smoke:linux` was then run against `ec3ad04` and also returned **0**, rebuilding frontend/embedded debug assets and passing 22 checks with five clean exits and zero fatal diagnostics. The saved explicit-renderer evidence is this latest run. This second comparison does not erase the default-renderer failure or claim long-term stability.
+
+### Windows Gmail unread clearing (2026-10-20)
+
+A regression test reproduced the stuck count: title zero was acknowledged, the Inbox DOM reported one, and removing its badge made the collector suppress the previously acknowledged title zero. Gmail DOM/title now share delivery history and a pending queue entry; a rejected older DOM hint cannot replace the latest title zero.
+
+`npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test:coverage` (117 tests), `npm.cmd run crap` (threshold 8), `npm.cmd run native:lint` (fmt/clippy), and `npm.cmd run native:test` (22 tests) passed. `npm.cmd run smoke` passed all 33 Windows WebView2 checks, including two repeated title-zero / DOM-one / removed-badge-zero cycles and native window-title total assertions. [Native evidence](evidence/windows-gmail-unread-clear.json). These are deterministic HTTPS fixtures; the user's actual Gmail mailbox and visual taskbar overlay remain unverified.
+
+Windows release packaging also passed with `npm.cmd run native:build` (EXE, MSI and NSIS setup); refreshed sizes/hashes are in [Windows artifacts](evidence/windows-artifacts.json). No installer was run.

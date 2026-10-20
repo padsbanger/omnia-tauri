@@ -5,19 +5,19 @@
     "artifacts":  [
                       {
                           "path":  "src-tauri/target/release/omnia-tauri.exe",
-                          "bytes":  15678464,
-                          "sha256":  "094573ceeeca7575532ea9e98ab9e0f7ad2da7bafa47bc87bdbc2f6393f3b524"
+                          "bytes":  11207680,
+                          "sha256":  "503874b0d257481034201aff7cd852d099ee5dabdb42967d64477a0b10a02472"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
-                          "bytes":  6234112,
-                          "sha256":  "7510463dab791cbb0f97ec91db1b8bfeeb0176bf05993ea495dba2c32f5312c4"
+                          "bytes":  5013504,
+                          "sha256":  "640627c8b11a0c2d904ea292b031167e9acf349f06376df04e0c16806b6db228"
                       },
                       {
                           "path":  "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-                          "bytes":  4298703,
-                          "sha256":  "6f8d8b600f4935491fb53f10f324613290046abcbe58363d308fd258a3e7cf7b"
+                          "bytes":  3569939,
+                          "sha256":  "a4fb53e2394dbf4c98efb294c0790ff94cc7ced883073abbbb2ce2e6e431d0ba"
                       }
                   ],
-    "note":  "Rebuilt after native HTML drag-and-drop route reordering; 32 native checks pass including both lists, backend ordering, full-restart persistence and 50% drawer backdrop"
+    "note":  "Rebuilt after Gmail unread clearing fix; 33 Windows native checks pass including repeated title-zero / DOM-one / removed-badge-zero transitions. Installers not installed."
 }

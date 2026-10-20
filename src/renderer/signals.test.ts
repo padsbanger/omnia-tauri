@@ -14,6 +14,42 @@ function page(url: string, html: string, invoke = vi.fn().mockResolvedValue(unde
 }
 describe("injected provider hints", () => {
   afterEach(() => vi.useRealTimers());
+  it("clears Gmail after its last unread badge disappears, including repeated source switches", async () => {
+    vi.useFakeTimers();
+    const { dom, invoke } = page("https://mail.google.com/mail/u/0/", '<title>Inbox - Gmail</title><nav><div><a href="#inbox">Inbox</a></div></nav>');
+    await vi.advanceTimersByTimeAsync(1000);
+    for (let cycle = 0; cycle < 2; cycle++) {
+      const badge = dom.window.document.createElement("span");
+      badge.textContent = "1";
+      dom.window.document.querySelector("nav div")!.append(badge);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(invoke).toHaveBeenLastCalledWith("page_signal", { count: 1, source: "gmail-dom" });
+      badge.remove();
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(invoke).toHaveBeenLastCalledWith("page_signal", { count: 0, source: "gmail-title" });
+    }
+    dom.window.close();
+  });
+  it("replaces a rejected Gmail DOM hint with the latest title zero", async () => {
+    vi.useFakeTimers();
+    const invoke = vi.fn().mockResolvedValue(undefined);
+    const { dom } = page("https://mail.google.com/mail/u/0/", '<title>Inbox - Gmail</title><nav><div><a href="#inbox">Inbox</a></div></nav>', invoke);
+    await vi.advanceTimersByTimeAsync(1000);
+    invoke.mockImplementation((command: string) => command === "page_signal"
+      ? Promise.reject(new Error("rate limited")) : Promise.resolve());
+    const badge = dom.window.document.createElement("span");
+    badge.textContent = "1";
+    dom.window.document.querySelector("nav div")!.append(badge);
+    await vi.advanceTimersByTimeAsync(300);
+    badge.remove();
+    await vi.advanceTimersByTimeAsync(300);
+    invoke.mockClear().mockResolvedValue(undefined);
+    await vi.advanceTimersByTimeAsync(2000);
+    expect(invoke.mock.calls.filter(([command]) => command === "page_signal")).toEqual([
+      ["page_signal", { count: 0, source: "gmail-title" }],
+    ]);
+    dom.window.close();
+  });
   it("accepts Web A's Tauri-specific count callback without exposing privileged operations", async () => {
     vi.useFakeTimers();
     const { dom, invoke } = page("https://web.telegram.org/a/", '<title>Telegram</title>');
