@@ -1,4 +1,5 @@
 {
+  "version": "0.11.1",
   "platform": "Windows x64",
   "signed": false,
   "installed": false,
@@ -6,18 +7,18 @@
     {
       "path": "src-tauri/target/release/omnia-tauri.exe",
       "bytes": 11237888,
-      "sha256": "557cc365db745343042cff192c52b59a3b2836b37ec0da81504299111c40c52a"
+      "sha256": "829bbcb68537f2284df8f7d85190a3ef0520b854ab00b31945b5bef7eea3f648"
     },
     {
-      "path": "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
+      "path": "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.1_x64_en-US.msi",
       "bytes": 5025792,
-      "sha256": "e9d6f2aed35775bdf3f782336a1f94f1e87cae91c39ad810575db394c8ede5cf"
+      "sha256": "a72c8699ef07a11e7db45e5096be588872fdd29a835ad3f408465564f74cdefb"
     },
     {
-      "path": "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-      "bytes": 3576783,
-      "sha256": "a8ce3457e6e9f467511bea52b128504b7da5c07dd6c74129489306f1b93a4b04"
+      "path": "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.1_x64-setup.exe",
+      "bytes": 3576730,
+      "sha256": "76d2b0b5f14730a22d75a37f22b8dc21f316950f443813b64f03c76909026360"
     }
   ],
-  "note": "Rebuilt after window size/maximized persistence fix. Three focused native Windows restart checks pass; full suite stops at the existing on-screen pixel assertion (see windows-window-state-full-suite.json). Installers not installed."
+  "note": "Built with npm.cmd run native:build (exit 0). Executable and MSI product versions verified as 0.11.1. Focused native restart checks pass. Full-suite screen-pixel failure and cross-platform/provider limitations remain documented. No installer installed or release published."
 }
