@@ -1,0 +1,243 @@
+{
+  "scope": "window persistence",
+  "platform": "win32",
+  "started": "2026-10-21T16:32:55.904Z",
+  "checks": [
+    {
+      "name": "Normal window dimensions survive native close and restart",
+      "drawerOpen": false,
+      "maximized": false,
+      "minimized": false,
+      "pixels": [
+        [
+          25,
+          25,
+          31
+        ],
+        [
+          23,
+          25,
+          32
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 700,
+        "width": 1000
+      },
+      "title": "Omnia",
+      "views": [
+        {
+          "height": 400,
+          "id": "fixture-b",
+          "label": "route-f354a65ab3256770643d788c-2",
+          "visible": false,
+          "width": 400,
+          "x": 108,
+          "y": 100
+        },
+        {
+          "height": 700,
+          "id": "fixture-a",
+          "label": "route-89c7aa0417679a9a032bdd33-1",
+          "visible": true,
+          "width": 900,
+          "x": 100,
+          "y": 0
+        }
+      ],
+      "windowSize": {
+        "height": 700,
+        "width": 1000
+      }
+    },
+    {
+      "name": "Maximized window and full-size trusted shell survive native close and restart",
+      "drawerOpen": false,
+      "maximized": true,
+      "minimized": false,
+      "pixels": [
+        [
+          30,
+          18,
+          27
+        ],
+        [
+          151,
+          148,
+          165
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 1369,
+        "width": 2560
+      },
+      "title": "Omnia",
+      "views": [
+        {
+          "height": 1369,
+          "id": "fixture-a",
+          "label": "route-89c7aa0417679a9a032bdd33-1",
+          "visible": true,
+          "width": 2460,
+          "x": 100,
+          "y": 0
+        },
+        {
+          "height": 400,
+          "id": "fixture-b",
+          "label": "route-f354a65ab3256770643d788c-2",
+          "visible": false,
+          "width": 400,
+          "x": 108,
+          "y": 100
+        }
+      ],
+      "windowSize": {
+        "height": 1369,
+        "width": 2560
+      }
+    },
+    {
+      "name": "Minimizing preserves maximized preference; unmaximize restores original bounds and persists",
+      "afterMinimize": {
+        "drawerOpen": false,
+        "maximized": true,
+        "minimized": false,
+        "pixels": [
+          [
+            22,
+            20,
+            22
+          ],
+          [
+            151,
+            148,
+            165
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 1369,
+          "width": 2560
+        },
+        "title": "Omnia",
+        "views": [
+          {
+            "height": 400,
+            "id": "fixture-b",
+            "label": "route-f354a65ab3256770643d788c-2",
+            "visible": false,
+            "width": 400,
+            "x": 108,
+            "y": 100
+          },
+          {
+            "height": 1369,
+            "id": "fixture-a",
+            "label": "route-89c7aa0417679a9a032bdd33-1",
+            "visible": true,
+            "width": 2460,
+            "x": 100,
+            "y": 0
+          }
+        ],
+        "windowSize": {
+          "height": 1369,
+          "width": 2560
+        }
+      },
+      "restored": {
+        "drawerOpen": false,
+        "maximized": false,
+        "minimized": false,
+        "pixels": [
+          [
+            63,
+            35,
+            39
+          ],
+          [
+            20,
+            19,
+            28
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 700,
+          "width": 1000
+        },
+        "title": "Omnia",
+        "views": [
+          {
+            "height": 400,
+            "id": "fixture-b",
+            "label": "route-f354a65ab3256770643d788c-2",
+            "visible": false,
+            "width": 400,
+            "x": 108,
+            "y": 100
+          },
+          {
+            "height": 700,
+            "id": "fixture-a",
+            "label": "route-89c7aa0417679a9a032bdd33-1",
+            "visible": true,
+            "width": 900,
+            "x": 100,
+            "y": 0
+          }
+        ],
+        "windowSize": {
+          "height": 700,
+          "width": 1000
+        }
+      }
+    }
+  ],
+  "contractRequests": [
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/token",
+      "grant": "refresh_token"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    }
+  ],
+  "passed": true
+}

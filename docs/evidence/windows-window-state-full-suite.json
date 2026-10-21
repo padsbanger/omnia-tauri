@@ -1,0 +1,330 @@
+{
+  "platform": "win32",
+  "started": "2026-10-21T16:31:06.967Z",
+  "checks": [
+    {
+      "name": "Normal window dimensions survive native close and restart",
+      "drawerOpen": false,
+      "maximized": false,
+      "minimized": false,
+      "pixels": [
+        [
+          114,
+          107,
+          86
+        ],
+        [
+          83,
+          77,
+          55
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 700,
+        "width": 1000
+      },
+      "title": "Omnia",
+      "views": [
+        {
+          "height": 400,
+          "id": "fixture-b",
+          "label": "route-f354a65ab3256770643d788c-2",
+          "visible": false,
+          "width": 400,
+          "x": 108,
+          "y": 100
+        },
+        {
+          "height": 700,
+          "id": "fixture-a",
+          "label": "route-89c7aa0417679a9a032bdd33-1",
+          "visible": true,
+          "width": 900,
+          "x": 100,
+          "y": 0
+        }
+      ],
+      "windowSize": {
+        "height": 700,
+        "width": 1000
+      }
+    },
+    {
+      "name": "Maximized window and full-size trusted shell survive native close and restart",
+      "drawerOpen": false,
+      "maximized": true,
+      "minimized": false,
+      "pixels": [
+        [
+          119,
+          112,
+          88
+        ],
+        [
+          151,
+          148,
+          165
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 1369,
+        "width": 2560
+      },
+      "title": "Omnia",
+      "views": [
+        {
+          "height": 400,
+          "id": "fixture-b",
+          "label": "route-f354a65ab3256770643d788c-2",
+          "visible": false,
+          "width": 400,
+          "x": 108,
+          "y": 100
+        },
+        {
+          "height": 1369,
+          "id": "fixture-a",
+          "label": "route-89c7aa0417679a9a032bdd33-1",
+          "visible": true,
+          "width": 2460,
+          "x": 100,
+          "y": 0
+        }
+      ],
+      "windowSize": {
+        "height": 1369,
+        "width": 2560
+      }
+    },
+    {
+      "name": "Minimizing preserves maximized preference; unmaximize restores original bounds and persists",
+      "afterMinimize": {
+        "drawerOpen": false,
+        "maximized": true,
+        "minimized": false,
+        "pixels": [
+          [
+            118,
+            113,
+            91
+          ],
+          [
+            151,
+            148,
+            165
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 1369,
+          "width": 2560
+        },
+        "title": "Omnia",
+        "views": [
+          {
+            "height": 400,
+            "id": "fixture-b",
+            "label": "route-f354a65ab3256770643d788c-2",
+            "visible": false,
+            "width": 400,
+            "x": 108,
+            "y": 100
+          },
+          {
+            "height": 1369,
+            "id": "fixture-a",
+            "label": "route-89c7aa0417679a9a032bdd33-1",
+            "visible": true,
+            "width": 2460,
+            "x": 100,
+            "y": 0
+          }
+        ],
+        "windowSize": {
+          "height": 1369,
+          "width": 2560
+        }
+      },
+      "restored": {
+        "drawerOpen": false,
+        "maximized": false,
+        "minimized": false,
+        "pixels": [
+          [
+            75,
+            70,
+            53
+          ],
+          [
+            92,
+            82,
+            61
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 700,
+          "width": 1000
+        },
+        "title": "Omnia",
+        "views": [
+          {
+            "height": 400,
+            "id": "fixture-b",
+            "label": "route-f354a65ab3256770643d788c-2",
+            "visible": false,
+            "width": 400,
+            "x": 108,
+            "y": 100
+          },
+          {
+            "height": 700,
+            "id": "fixture-a",
+            "label": "route-89c7aa0417679a9a032bdd33-1",
+            "visible": true,
+            "width": 900,
+            "x": 100,
+            "y": 0
+          }
+        ],
+        "windowSize": {
+          "height": 700,
+          "width": 1000
+        }
+      }
+    },
+    {
+      "name": "Two same-origin native profiles have independent localStorage and cookies"
+    },
+    {
+      "name": "Measured native bounds follow logical-to-physical DPI conversion",
+      "drawerOpen": false,
+      "maximized": false,
+      "minimized": false,
+      "pixels": [
+        [
+          61,
+          58,
+          40
+        ],
+        [
+          86,
+          76,
+          56
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 800,
+        "width": 1200
+      },
+      "title": "Omnia",
+      "views": [
+        {
+          "height": 600,
+          "id": "fixture-a",
+          "label": "route-781c7b53fa24fb23b6977bef-3",
+          "visible": true,
+          "width": 500,
+          "x": 108,
+          "y": 120
+        },
+        {
+          "height": 600,
+          "id": "fixture-b",
+          "label": "route-2b57fcb47ab2c8ea9d093e12-4",
+          "visible": true,
+          "width": 500,
+          "x": 608,
+          "y": 120
+        }
+      ],
+      "windowSize": {
+        "height": 800,
+        "width": 1200
+      }
+    },
+    {
+      "name": "Untrusted route denied privileged route action"
+    },
+    {
+      "name": "Native favicon discovery and malformed hint rejection"
+    },
+    {
+      "name": "Native title unread signal",
+      "unreadCounts": [
+        {
+          "routeId": "fixture-b",
+          "count": 0,
+          "source": "title"
+        },
+        {
+          "routeId": "fixture-a",
+          "count": 7,
+          "source": "title"
+        }
+      ],
+      "total": 7,
+      "revision": 7
+    },
+    {
+      "name": "Single/spread/matrix positioning, hide/show, live views during drawer overlay, focus commands"
+    },
+    {
+      "name": "Refresh and Electron-equivalent zoom scale"
+    },
+    {
+      "name": "Auth popup preserves opener/postMessage and profile without replacing the waiting route; privileged commands denied"
+    },
+    {
+      "name": "Hibernate destroys view; restore retains session"
+    },
+    {
+      "name": "Full application restart retains both isolated identities"
+    },
+    {
+      "name": "Targeted clear resets only profile A"
+    },
+    {
+      "name": "Redirect to disallowed hostname intercepted"
+    },
+    {
+      "name": "Native callbacks record popup creation and external handoff in redacted local trace"
+    },
+    {
+      "name": "Gmail continuation through YouTube and Polish, UK and German account hosts completes in the originating native profile without browser handoff; duplicate profile stays signed out"
+    },
+    {
+      "name": "Injected Gmail DOM signals cross the HTTPS native boundary and clear unread counts"
+    },
+    {
+      "name": "Gmail last-unread badge removal clears the native total across repeated title-zero -> DOM-one -> title-zero transitions"
+    },
+    {
+      "name": "Sign-in cancellation interrupts in-flight discovery without waiting for its timeout"
+    },
+    {
+      "name": "Native OIDC PKCE exchange, OS credential storage and production route-list contract against local fixture"
+    },
+    {
+      "name": "Real HTML drag gestures reorder sidebar and management cards, persist API order, preserve selection and native view generations"
+    },
+    {
+      "name": "Injected unread updates render a visible sidebar badge and native window total, then clear both"
+    },
+    {
+      "name": "Telegram Web A DOM counters with plain title and no Badging API update the visible sidebar/native total 1 -> 4 -> 0"
+    },
+    {
+      "name": "Telegram Web A Tauri-specific count callback updates and clears the sidebar/native total"
+    }
+  ],
+  "drmCapabilityProbe": {
+    "com.widevine.alpha": "API accepted configuration",
+    "com.microsoft.playready.recommendation": "API accepted configuration"
+  },
+  "passed": false,
+  "error": "AssertionError [ERR_ASSERTION]: Native fixture must be foreground and visibly blue before overlay\n+ actual - expected\n\n  [\n+   38,\n+   35,\n+   36\n-   40,\n-   160,\n-   240\n  ]\n"
+}

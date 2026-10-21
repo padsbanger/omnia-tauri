@@ -18,6 +18,7 @@ mod security;
 #[cfg(all(target_os = "linux", debug_assertions))]
 mod smoke_linux;
 mod unread;
+mod window_state;
 mod workspace;
 
 use tauri::Manager;
@@ -27,6 +28,7 @@ async fn smoke_inspect(
     app: tauri::AppHandle,
     state: tauri::State<'_, runtime::Native>,
     size: Option<[u32; 2]>,
+    window_action: Option<String>,
 ) -> Result<serde_json::Value, String> {
     security::trusted(&webview)?;
     if !cfg!(debug_assertions) || std::env::var_os("OMNIA_SMOKE").is_none() {
@@ -34,6 +36,15 @@ async fn smoke_inspect(
     }
     let rt = state.0.lock().await;
     let window = app.get_window("main").ok_or("Missing window")?;
+    match window_action.as_deref() {
+        Some("maximize") => window.maximize(),
+        Some("unmaximize") => window.unmaximize(),
+        Some("minimize") => window.minimize(),
+        Some("close") => window.close(),
+        None => Ok(()),
+        _ => return Err("Invalid smoke window action".into()),
+    }
+    .map_err(|e| e.to_string())?;
     if let Some([width, height]) = size {
         if !(700..=1600).contains(&width) || !(500..=1000).contains(&height) {
             return Err("Invalid smoke window size".into());
@@ -98,7 +109,7 @@ async fn smoke_inspect(
         }
     }
     Ok(
-        serde_json::json!({"scale":scale,"views":views,"pixels":pixels,"drawerOpen":rt.drawer_open,"title":window.title().map_err(|e| e.to_string())?}),
+        serde_json::json!({"scale":scale,"views":views,"pixels":pixels,"drawerOpen":rt.drawer_open,"title":window.title().map_err(|e| e.to_string())?,"maximized":window.is_maximized().map_err(|e| e.to_string())?,"minimized":window.is_minimized().map_err(|e| e.to_string())?,"windowSize":window.inner_size().map_err(|e| e.to_string())?,"shellSize":app.get_webview("shell").ok_or("Missing shell")?.size().map_err(|e| e.to_string())?}),
     )
 }
 #[tauri::command]
@@ -202,10 +213,17 @@ fn main() {
             app.manage(runtime::Native(tokio::sync::Mutex::new(
                 runtime::Runtime::new(root.clone()),
             )));
+            let window_preferences = window_state::Service::load(&root);
+            let saved_window = window_preferences.snapshot();
+            app.manage(window_preferences);
             let window = tauri::window::WindowBuilder::new(app, "main")
                 .title("Omnia Tauri")
-                .inner_size(1200., 800.)
+                .inner_size(saved_window.width, saved_window.height)
+                .maximized(saved_window.maximized)
                 .build()?;
+            let shell_size = window
+                .inner_size()?
+                .to_logical::<f64>(window.scale_factor()?);
             let mut shell = tauri::webview::WebviewBuilder::new(
                 "shell",
                 tauri::WebviewUrl::App("index.html".into()),
@@ -220,19 +238,16 @@ fn main() {
             if cfg!(debug_assertions) && std::env::var_os("OMNIA_SMOKE").is_some() {
                 shell = shell.additional_browser_args("--remote-debugging-port=9222");
             }
-            let shell_view = window.add_child(
-                shell,
-                tauri::LogicalPosition::new(0., 0.),
-                tauri::LogicalSize::new(1200., 800.),
-            )?;
+            let shell_view =
+                window.add_child(shell, tauri::LogicalPosition::new(0., 0.), shell_size)?;
             #[cfg(target_os = "linux")]
             geometry_linux::bounds(
                 &shell_view,
                 layout::Bounds {
                     x: 0.,
                     y: 0.,
-                    width: 1200.,
-                    height: 800.,
+                    width: shell_size.width,
+                    height: shell_size.height,
                 },
             )?;
             #[cfg(not(target_os = "linux"))]
@@ -251,11 +266,15 @@ fn main() {
             let handle = app.handle().clone();
             window.on_window_event(move |e| {
                 if matches!(e, tauri::WindowEvent::CloseRequested { .. }) {
+                    window_state::save(&handle);
                     // The workspace owns its login and hosted-popup windows.
                     // Closing it must not leave those windows or background views running.
                     handle.exit(0);
                 }
                 if let tauri::WindowEvent::Resized(size) = e {
+                    if let Some(window) = handle.get_window("main") {
+                        handle.state::<window_state::Service>().observe(&window);
+                    }
                     if let Some(shell) = handle.get_webview("shell") {
                         #[cfg(target_os = "linux")]
                         if let Ok(scale) = shell.window().scale_factor() {
@@ -280,6 +299,12 @@ fn main() {
         .build(tauri::generate_context!())
         .expect("Omnia native runtime failed")
         .run(|_app, _event| {
+            if matches!(
+                _event,
+                tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit
+            ) {
+                window_state::save(_app);
+            }
             #[cfg(target_os = "macos")]
             if let tauri::RunEvent::Opened { urls } = _event {
                 auth::dispatch_callbacks(_app, urls.into_iter().map(|u| u.to_string()).collect());

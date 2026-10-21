@@ -1,23 +1,23 @@
 {
-    "platform":  "Windows x64",
-    "signed":  false,
-    "installed":  false,
-    "artifacts":  [
-                      {
-                          "path":  "src-tauri/target/release/omnia-tauri.exe",
-                          "bytes":  11207680,
-                          "sha256":  "503874b0d257481034201aff7cd852d099ee5dabdb42967d64477a0b10a02472"
-                      },
-                      {
-                          "path":  "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
-                          "bytes":  5013504,
-                          "sha256":  "640627c8b11a0c2d904ea292b031167e9acf349f06376df04e0c16806b6db228"
-                      },
-                      {
-                          "path":  "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
-                          "bytes":  3569939,
-                          "sha256":  "a4fb53e2394dbf4c98efb294c0790ff94cc7ced883073abbbb2ce2e6e431d0ba"
-                      }
-                  ],
-    "note":  "Rebuilt after Gmail unread clearing fix; 33 Windows native checks pass including repeated title-zero / DOM-one / removed-badge-zero transitions. Installers not installed."
+  "platform": "Windows x64",
+  "signed": false,
+  "installed": false,
+  "artifacts": [
+    {
+      "path": "src-tauri/target/release/omnia-tauri.exe",
+      "bytes": 11237888,
+      "sha256": "557cc365db745343042cff192c52b59a3b2836b37ec0da81504299111c40c52a"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/msi/Omnia Tauri_0.11.0_x64_en-US.msi",
+      "bytes": 5025792,
+      "sha256": "e9d6f2aed35775bdf3f782336a1f94f1e87cae91c39ad810575db394c8ede5cf"
+    },
+    {
+      "path": "src-tauri/target/release/bundle/nsis/Omnia Tauri_0.11.0_x64-setup.exe",
+      "bytes": 3576783,
+      "sha256": "a8ce3457e6e9f467511bea52b128504b7da5c07dd6c74129489306f1b93a4b04"
+    }
+  ],
+  "note": "Rebuilt after window size/maximized persistence fix. Three focused native Windows restart checks pass; full suite stops at the existing on-screen pixel assertion (see windows-window-state-full-suite.json). Installers not installed."
 }

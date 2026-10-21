@@ -95,6 +95,8 @@ Endpoints require HTTPS except loopback fixtures. The exact source callback is r
 
 App identity is `com.strielok.omnia.tauri`. On Windows the data root is `%LOCALAPPDATA%/com.strielok.omnia.tauri`; development appends `/development`, and smoke tests append `/development/smoke`. Other platforms use Tauri's app-local-data directory. Changing Omnia accounts or configured identity/backend namespaces selects a different cache/profile namespace. Electron website sessions cannot transfer; sign in to each hosted service again.
 
+The main window remembers its normal size and maximized state across normal close/restart, in `window-state.json` under that data root. Minimizing does not replace these preferences; start-at-login minimized still takes precedence. A forced process kill may lose changes since the previous normal exit. Missing or invalid preferences use the default 1200 × 800 window. Run `npm run smoke -- --window-only` for the focused Windows native restart regression; Linux/macOS restoration and mixed-monitor DPI remain unverified.
+
 ## Troubleshooting
 
 - Hosted-site browser handoffs can be diagnosed with `diagnostics/navigation.jsonl` under the app data root. Development builds enable this bounded local trace by default; set `OMNIA_NAVIGATION_TRACE=0` to disable it, or `OMNIA_NAVIGATION_TRACE=1` to enable it in a packaged build. It records native view identifiers, destination hosts, a few known Google login paths and navigation/popup decisions. Query strings, fragments, credentials and other paths are omitted. No trace is uploaded. On Windows development the file is `%LOCALAPPDATA%/com.strielok.omnia.tauri/development/diagnostics/navigation.jsonl`.

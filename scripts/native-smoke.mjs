@@ -11,7 +11,7 @@ import { websiteFixture } from './website-fixture.mjs';
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
 if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app before native smoke testing; its single-instance handler must not receive fixture commands.');
-const evidence = { platform: process.platform, started: new Date().toISOString(), checks: [] };
+const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
 const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
 const backend=mockBackend('http://127.0.0.1:7890');
 backend.state.routes[0].icon='telegram';
@@ -56,8 +56,70 @@ async function waitUnread(page,id,count,source){
 }
 async function routes(){routeBrowsers=await Promise.all([connect(portA),connect(9224)]);return Promise.all(routeBrowsers.map(async b=>{const p=b.contexts()[0].pages().find(p=>p.url().includes(':7890'))||b.contexts()[0].pages()[0];await p.waitForSelector('#identity');return p;}));}
 async function stop(){for(const b of routeBrowsers)await b.close().catch(()=>{});routeBrowsers=[];await shellBrowser?.close().catch(()=>{});if(app){app.kill();await delay(1500);}}
+async function closeForRestart(page) {
+  const closing = app;
+  const exited = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Native window did not close')), 15000);
+    closing.once('exit', code => { clearTimeout(timeout); resolve(code); });
+  });
+  await invoke(page, 'smoke_inspect', { windowAction: 'close' }).catch(() => {});
+  assert.equal(await exited, 0, 'Normal window close must exit cleanly');
+  app = undefined;
+  await stop();
+}
+async function windowState(page, predicate) {
+  for (let i = 0; i < 80; i++) {
+    const state = await invoke(page, 'smoke_inspect');
+    if (predicate(state)) return state;
+    await delay(100);
+  }
+  assert.fail('Native window did not reach expected state');
+}
+function normalSize(state, width, height) {
+  return !state.maximized && !state.minimized &&
+    Math.abs(state.windowSize.width / state.scale - width) <= 1 &&
+    Math.abs(state.windowSize.height / state.scale - height) <= 1;
+}
+function shellFillsWindow(state) {
+  assert.deepEqual(state.shellSize, state.windowSize, 'Trusted shell must fill restored native window');
+}
+
 try {
   let shell=await launch();
+  await invoke(shell, 'smoke_inspect', { windowAction: 'unmaximize' });
+  await windowState(shell, state => !state.maximized);
+  await invoke(shell, 'smoke_inspect', { size: [1000, 700] });
+  await windowState(shell, state => normalSize(state, 1000, 700));
+  await closeForRestart(shell);
+  shell = await launch();
+  const normal = await windowState(shell, state => normalSize(state, 1000, 700));
+  shellFillsWindow(normal);
+  check('Normal window dimensions survive native close and restart', normal);
+  await invoke(shell, 'smoke_inspect', { windowAction: 'maximize' });
+  await windowState(shell, state => state.maximized);
+  await closeForRestart(shell);
+  shell = await launch();
+  const maximized = await windowState(shell, state => state.maximized);
+  shellFillsWindow(maximized);
+  check('Maximized window and full-size trusted shell survive native close and restart', maximized);
+  await invoke(shell, 'smoke_inspect', { windowAction: 'minimize' });
+  await windowState(shell, state => state.minimized);
+  await closeForRestart(shell);
+  shell = await launch();
+  const afterMinimize = await windowState(shell, state => state.maximized && !state.minimized);
+  shellFillsWindow(afterMinimize);
+  await invoke(shell, 'smoke_inspect', { windowAction: 'unmaximize' });
+  const restored = await windowState(shell, state => normalSize(state, 1000, 700));
+  shellFillsWindow(restored);
+  await closeForRestart(shell);
+  shell = await launch();
+  await windowState(shell, state => normalSize(state, 1000, 700));
+  check('Minimizing preserves maximized preference; unmaximize restores original bounds and persists', { afterMinimize, restored });
+  await invoke(shell, 'smoke_inspect', { size: [1200, 800] });
+  await windowState(shell, state => normalSize(state, 1200, 800));
+  await closeForRestart(shell);
+  if (!process.argv.includes('--window-only')) {
+  shell = await launch();
   await invoke(shell,'auth_logout');await shell.reload();await shell.getByRole('button',{name:'Sign in',exact:true}).waitFor();
   await invoke(shell,'spike_seed');await layout(shell);
   let [a,b]=await routes();
@@ -299,6 +361,7 @@ try {
   const replay=spawn('src-tauri/target/debug/omnia-tauri.exe',[callback],{env:{...process.env,OMNIA_SMOKE:'1'},windowsHide:true,stdio:'ignore'});await new Promise(resolve=>replay.once('exit',resolve));await delay(300);
   assert.equal(backend.state.requests.filter(r=>r.grant==='authorization_code').length,exchanged);check('Already-running instance rejects replayed callback without exchanging the code');
   await invoke(shell,'auth_logout');
+  }
   evidence.contractRequests=backend.state.requests;
   evidence.passed=true;
 }catch(error){evidence.passed=false;evidence.error=String(error);console.error(error);try{const page=shellBrowser.contexts()[0].pages()[0];console.error('SHELL',await page.locator('body').innerText());console.error('REQUESTS',JSON.stringify(backend.state.requests));await page.screenshot({path:'reports/native-failure.png'});}catch{}process.exitCode=1;}
