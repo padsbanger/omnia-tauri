@@ -1,5 +1,24 @@
 # Progress record
 
+## 0.11.2 release — 2026-10-22
+
+Prepared patch version 0.11.2 from main after the failed 0.11.1 release run.
+Synchronized package.json/package-lock.json, Cargo.toml/Cargo.lock and
+tauri.conf.json; updated README artifact examples; added scoped release notes
+and Windows SHA-256 checksums. The release contains the Linux AppImage media
+framework packaging/probe, bounded native smoke shutdown handling and the
+Vitest discovery repair. Existing provider and default-renderer limitations
+remain explicit.
+
+Passed locally on Windows: lint, typecheck, coverage (13 files / 117 tests;
+92.92% statements, 88.23% branches), CRAP threshold 8, frontend build, 24 Rust
+tests, fmt and clippy. Native release packaging passed using isolated
+`CARGO_TARGET_DIR=src-tauri/target/release-0.11.2-build` because the user's
+running 0.11.1 process locks the normal release executable; the application,
+MSI and NSIS outputs report 0.11.2. No installed application was stopped or
+replaced. Cross-platform installers and Ubuntu behavior remain subject to the
+tag-triggered GitHub Actions run.
+
 ## Frontend Actions test discovery failure — 2026-10-22
 
 Diagnosed public Actions run 39740294247/job 119695654619 at commit

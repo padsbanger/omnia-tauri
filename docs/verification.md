@@ -172,3 +172,15 @@ The native packaging attempt was blocked when Cargo could not replace the
 running release executable (autostart PID 500); the process was not stopped.
 No native code changed, and no native smoke claim is made for this test-config
 repair.
+
+### 0.11.2 release verification (2026-10-22)
+
+All six npm/Cargo/Tauri version fields were synchronized to 0.11.2. Passed on
+Windows: lint, typecheck, 117 frontend tests with coverage (92.92% statements,
+88.23% branches), CRAP threshold 8, frontend build, 24 Rust tests, fmt and
+clippy. An isolated-target `npm.cmd run native:build` produced version-0.11.2
+EXE, MSI and NSIS outputs without stopping or overwriting the user's running
+0.11.1 application; [checksums](releases/0.11.2-SHA256SUMS.txt) are retained.
+No installer was installed. Linux/macOS packages, Ubuntu smoke behavior and
+release asset attachment require the GitHub release workflow and are not
+claimed from this Windows run.

@@ -1,0 +1,3 @@
+fa1f50936e51b7f8752c07845fba03ac8ef61cfc2c3f4ca377725c71efbf9bcc  omnia-tauri.exe
+c59e391ad524cba5477a2fafbde7d2ccfbff792e699fd923d5e5f0986eb430a2  Omnia Tauri_0.11.2_x64_en-US.msi
+b17b120bc6745dab71723a456fb2adab04f3529ee3878701eb8109b0fd37a616  Omnia Tauri_0.11.2_x64-setup.exe
