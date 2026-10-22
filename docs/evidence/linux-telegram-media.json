@@ -1,0 +1,71 @@
+{
+  "date": "2026-10-22",
+  "sourceCommit": "2417e01e49c24c314ebbedd7bd59024fb56e1499",
+  "localChanges": "Enable AppImage media bundling, CI prerequisites and finished-package regression test",
+  "host": "Omarchy/Arch Linux x86_64, Hyprland Wayland; WebKitGTK 2.52.6",
+  "diagnosis": {
+    "core": {
+      "pid": 3358,
+      "timestamp": "2026-10-21T23:00:34+02:00",
+      "signal": "SIGABRT",
+      "process": "AppImage WebKitWebProcess"
+    },
+    "preCrashLogs": [
+      "GStreamer element appsink not found. Please install it.",
+      "GStreamer element autoaudiosink not found. Please install it",
+      "g_signal_connect_data: assertion failed"
+    ],
+    "assertion": {
+      "returnAddressOffset": "0x3375cc0",
+      "source": "Source/WebCore/platform/graphics/gstreamer/MediaPlayerPrivateGStreamer.cpp",
+      "line": 1601,
+      "function": "GstElement *WebCore::MediaPlayerPrivateGStreamer::createAudioSink()",
+      "method": "Disassembly and embedded assertion strings in downloaded AppDir library; no full debug symbols"
+    },
+    "oomJournal": "No recorded OOM kills since 2026-10-19; current memory 26 GiB available, zero swap used",
+    "coreHandling": "Extracted to private mktemp file for thread backtraces, then deleted; no memory content saved in repository"
+  },
+  "before": {
+    "artifact": {
+      "name": "Omnia Tauri_0.11.0_amd64.AppImage",
+      "bytes": 86325752,
+      "sha256": "6b664dea4bcd2c35e9e7247b552e41bbc1786193d9597758ccae9d6297c6ac07"
+    },
+    "gstreamer": "1.24.2",
+    "pluginCheck": "FAIL: missing packaged GStreamer element appsrc",
+    "mediaExit": 1,
+    "mediaLog": "GStreamer 1.24.2; WebKit 2.52.6\nGStreamer element appsink not found. Please install it.\nGStreamer element autoaudiosink not found. Please install it\n\n(WebKitWebProcess:20144): GLib-GObject-CRITICAL **: 08:57:01.328: invalid (NULL) pointer instance\n\n(WebKitWebProcess:20144): GLib-GObject-CRITICAL **: 08:57:01.328: g_signal_connect_data: assertion 'G_TYPE_CHECK_INSTANCE (instance)' failed\nFAIL: packaged WebKit process terminated (0)\n",
+    "renderer": "WEBKIT_DISABLE_DMABUF_RENDERER=1",
+    "flags": [
+      "--skip-plugin-check"
+    ]
+  },
+  "after": {
+    "artifact": {
+      "name": "Omnia Tauri_0.11.1_amd64.AppImage",
+      "bytes": 158403064,
+      "sha256": "715f554a0236df9ec7692cbf0f69ef192e7b57278cd2758f46f5e72346f731c0"
+    },
+    "gstreamer": "1.28.6",
+    "defaultRendererExit": 0,
+    "defaultRendererLog": "GStreamer 1.28.6; WebKit 2.52.6\nPASS: bundled appsrc\nPASS: bundled appsink\nPASS: bundled autoaudiosink\nPASS: bundled audioconvert\nPASS: bundled audioresample\nPASS: bundled volume\nPASS: bundled wavparse\nPASS: packaged HTML audio ended and three Web Audio contexts advanced/closed\n",
+    "dmabufDisabledExit": 0,
+    "dmabufDisabledLog": "GStreamer GStreamer 1.28.6; WebKit 2.52.6\nPASS: bundled appsrc\nPASS: bundled appsink\nPASS: bundled autoaudiosink\nPASS: bundled audioconvert\nPASS: bundled audioresample\nPASS: bundled volume\nPASS: bundled wavparse\nPASS: packaged HTML audio ended and three Web Audio contexts advanced/closed\n"
+  },
+  "checks": {
+    "frontend": "lint/typecheck; 117 tests; coverage 92.92% statements, 88.23% branches; CRAP threshold 8 passed (four existing mapping warnings)",
+    "rust": "26 tests; cargo fmt --check and clippy --all-targets -D warnings passed",
+    "build": "Frontend and native release build passed; ELF/DEB/RPM/AppImage built; no installation",
+    "native": "22 Tauri fixture checks, five clean exits; WEBKIT_DISABLE_DMABUF_RENDERER=1; linux-telegram-media-native.json",
+    "workflow": "actionlint 1.7.12 passed with unavailable shellcheck/pyflakes integrations disabled; GitHub job not executed"
+  },
+  "buildCommand": "PATH=/tmp/omnia-build-tools/usr/bin:$PATH CARGO_BUILD_JOBS=3 GSTREAMER_HELPERS_DIR=/usr/lib/gstreamer-1.0 npm run native:build",
+  "packageCheckCommand": "python3 scripts/check-appimage-media.py \"src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.1_amd64.AppImage\"",
+  "remaining": [
+    "Real Telegram account retry",
+    "Audible hardware output, calls, provider video codecs and DRM",
+    "Ubuntu CI and Windows/macOS not run here",
+    "Existing graphics shutdown issue is distinct; full native regression used explicit workaround"
+  ],
+  "dataChanges": "No user profile/session deletion, desktop/autostart changes, installed package replacement, push or release publication"
+}

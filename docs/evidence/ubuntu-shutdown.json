@@ -1,0 +1,50 @@
+{
+  "date": "2026-10-22",
+  "failedRun": "https://github.com/padsbanger/omnia-tauri/actions/runs/39638971121/job/119357256149",
+  "sourceCommit": "2417e01e49c24c314ebbedd7bd59024fb56e1499",
+  "stage": "WebKitGTK smoke in disposable Xvfb and Secret Service session; native:build skipped afterward",
+  "observed": {
+    "checksPassed": 12,
+    "exits": [
+      {
+        "code": 0,
+        "signal": null
+      },
+      {
+        "stdioTimeout": true,
+        "terminationRequested": false,
+        "mainExit": {
+          "code": 0,
+          "signal": null
+        }
+      }
+    ],
+    "runtimeDiagnostics": []
+  },
+  "cause": "Driver used one eight-second deadline for Node close (parent exit plus inherited stdio); mainExit was zero and kill returned false. It later awaited close without a bound but still asserted the earlier null timeout result.",
+  "change": "Separate 8s parent exit and 30s stdio deadlines; retain strict exit/signal/diagnostic failures, bound failure cleanup, record drain duration, drain stdout.",
+  "validation": {
+    "subprocessRegressionTests": "5 passed",
+    "defaultDeadlineProbe": {
+      "mainExit": {
+        "code": 0,
+        "signal": null
+      },
+      "stdioClosed": true,
+      "stdioDrainMs": 9568
+    },
+    "workflow": "actionlint 1.7.12, all bash -n blocks, git diff --check passed",
+    "nativeRerun": {
+      "command": "WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run smoke:linux",
+      "exitCode": 0,
+      "checksPassed": 22,
+      "cleanExits": 5,
+      "fatalDiagnostics": 0,
+      "environment": "Arch/Omarchy Hyprland Wayland; explicit DMABUF workaround",
+      "report": "linux-ubuntu-shutdown-native.json"
+    },
+    "ubuntuRerun": "Not run; local host is Arch and Docker daemon access is denied."
+  },
+  "sourceDocumentation": "https://nodejs.org/api/child_process.html#event-close",
+  "releaseNote": "No push, dispatch, tag movement or publication. Re-running the old release checks out its unchanged source; native driver fix must be included in the tested commit/tag."
+}

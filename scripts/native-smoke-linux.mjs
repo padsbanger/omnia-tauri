@@ -16,6 +16,7 @@ import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { mockBackend } from "./mock-backend.mjs";
 import { websiteFixture } from "./website-fixture.mjs";
+import { observeNativeProcess } from "./native-process.mjs";
 
 if (process.platform !== "linux") throw Error("Linux/WebKitGTK driver only");
 try {
@@ -101,7 +102,7 @@ await new Promise((resolve, reject) => {
   fixture.once("error", reject);
   fixture.listen(7890, "127.0.0.1", resolve);
 });
-let app, stopped, appEnv, privateBus, mainExit;
+let app, waitForShutdown, appEnv, privateBus;
 function control(request) {
   return new Promise((resolve, reject) => {
     const socket = createConnection(join(directory, "control.sock"));
@@ -166,10 +167,8 @@ async function launch(args = [], environment = {}) {
     env: appEnv,
     stdio: ["ignore", "pipe", "pipe"],
   });
-  mainExit = null;
-  app.once("exit", (code, signal) => {
-    mainExit = { code, signal };
-  });
+  waitForShutdown = observeNativeProcess(app);
+  app.stdout.resume();
   app.stderr.on("data", (b) => {
     process.stderr.write(b);
     for (const line of b.toString().split("\n")) {
@@ -178,9 +177,6 @@ async function launch(args = [], environment = {}) {
       }
     }
   });
-  stopped = new Promise((resolve) =>
-    app.once("close", (code, signal) => resolve({ code, signal })),
-  );
   await until(
     () =>
       evaluate(
@@ -193,22 +189,15 @@ async function launch(args = [], environment = {}) {
 async function stop() {
   if (!app) return;
   await control({ op: "exit" }).catch(() => {});
-  const result = await Promise.race([stopped, delay(8000).then(() => null)]);
-  let terminationRequested = false;
-  if (!result) {
-    terminationRequested = app.kill("SIGTERM");
-    await stopped;
+  try {
+    evidence.exits.push(await waitForShutdown());
+  } catch (error) {
+    evidence.exits.push(error.shutdown);
+    throw error;
+  } finally {
+    app = null;
   }
-  app = null;
   await delay(500);
-  evidence.exits.push(
-    result ?? { stdioTimeout: true, terminationRequested, mainExit },
-  );
-  assert.deepEqual(
-    result,
-    { code: 0, signal: null },
-    "Native app must exit cleanly",
-  );
 }
 let revision = 0;
 const bounds = (x, y, width, height) => ({ x, y, width, height });

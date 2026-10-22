@@ -140,9 +140,25 @@ This bypasses WebKit's faster DMABUF rendering path; the application does not en
 
 Close any other Omnia Tauri process before smoke testing. `smoke:linux` builds an embedded-assets debug executable and drives the actual native WebKitGTK shell/child views on the available display. It requires a session D-Bus, an unlocked Secret Service and free fixture port 7890. It creates private temporary XDG data/config/cache storage and a fixture-specific keyring namespace, removes fixture credentials on logout, and writes `reports/native-linux.json`. It never changes your real autostart or protocol registration. The Windows command remains `npm run smoke`.
 
+The Linux driver gives the main process eight seconds to exit and then up to 30 seconds for inherited stdout/stderr to close. Reports distinguish the parent exit from pipe-drain time; nonzero exits, signals, either deadline and fatal native diagnostics still fail the run. This avoids treating delayed pipe closure on Ubuntu runners as an application exit failure. Test the shutdown monitor without a GUI using `node --test scripts/native-process.test.mjs`.
+
 To select the existing X11 server explicitly, run `GDK_BACKEND=x11 npm run smoke:linux`; under Hyprland that is Xwayland, not a standalone Xorg session. Keep the actual backend and monitor scales with evidence. The CI smoke job uses Xvfb and a disposable D-Bus/keyring session; CI configuration is not local evidence.
 
 Linux routes are native WebKitGTK views placed by `geometry_linux.rs`; drawers hide route widgets while the trusted shell handles management. Clearing a session immediately rotates its profile; physical removal waits for next-startup recovery because this Tauri version retains Linux WebContexts. See [platform findings](docs/platform-support.md) and [verification](docs/verification.md) for tested scope, artifact results and remaining limitations.
 
 
 Linux artifacts are `src-tauri/target/release/omnia-tauri` and DEB/RPM/AppImage files in `src-tauri/target/release/bundle/`. All three bundles were produced locally; none was installed or verified as an installed application. The optimized AppImage rendered the signed-out shell and closed cleanly using `--appimage-extract-and-run`, isolated application data and the explicit DMABUF workaround; FUSE launch and provider workflows were not tested in that package check. The host lacks a system `patchelf`; this run used an isolated extracted copy via `PATH=/tmp/omnia-build-tools/usr/bin:$PATH npm run native:build`. For a persistent build environment, provide `patchelf` on PATH. [Current sizes, hashes and launch scope](docs/evidence/linux-bundle-size.json); [original build evidence](docs/evidence/linux-artifacts.json).
+
+### Telegram / audio crashes in older AppImages
+
+The downloaded 0.11.0 AppImage omitted GStreamer plugins. On this host its WebKit process aborted in `MediaPlayerPrivateGStreamer::createAudioSink()` after reporting missing `autoaudiosink`; other logs report missing `appsrc`/`appsink`. The AppImage configuration now enables Tauri's [media framework bundling](https://v2.tauri.app/distribute/appimage/#multimedia-support-via-gstreamer). This increases package size. Existing downloads need replacing with a rebuilt package; deleting Telegram's session does not fix missing libraries.
+
+Build machines need GStreamer base/good plugins and libav (`gst-plugins-base gst-plugins-good gst-libav` on Arch; `gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav` on Ubuntu). On Arch the linuxdeploy plugin also needs `GSTREAMER_HELPERS_DIR=/usr/lib/gstreamer-1.0` during `npm run native:build`; Ubuntu's helper location is detected by default.
+
+Verify the finished package, using a desktop or `xvfb-run -a dbus-run-session --` in CI:
+
+```sh
+python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.1_amd64.AppImage"
+```
+
+This requires Python 3, a C compiler, pkg-config and WebKitGTK/GStreamer development headers. It extracts into temporary storage, checks that required media elements resolve inside the package, then runs silent HTML audio and three Web Audio contexts with the bundled engine and launch hooks. It uses an ephemeral profile and isolated XDG paths. It does not test Telegram accounts, audible hardware output, calls or DRM. The graphics workaround above is a separate issue; use its explicit environment prefix if needed on the affected host.

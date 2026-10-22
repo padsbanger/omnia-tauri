@@ -19,6 +19,7 @@
     "active": true,
     "targets": "all",
     "icon": ["icons/icon.ico", "icons/icon.png", "icons/512x512.png"],
+    "linux": { "appimage": { "bundleMediaFramework": true } },
     "macOS": { "minimumSystemVersion": "14.0" }
   }
 }

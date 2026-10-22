@@ -1,5 +1,27 @@
 # Progress record
 
+## Ubuntu Actions shutdown failure — 2026-10-22
+
+Read failure run 39638971121/job 119357256149 and its native evidence through gh. Ubuntu compiled, passed Rust checks, then smoke failed after 12 checks: mainExit={code:0,signal:null}, terminationRequested=false, stdioTimeout=true. Driver confused Node's close (including inherited pipes) with parent exit, then awaited close unbounded while still asserting the earlier null timeout. Same source's push run 39638862915 passed; this is an intermittent smoke shutdown deadline, not a compile error.
+
+Added scripts/native-process.mjs: separate 8s parent exit/30s stream-drain deadlines, bounded TERM/KILL cleanup, explicit evidence including drain duration. Zero exit does not bypass stuck pipes or native crash diagnostics. Drain stdout as well. Five real subprocess regression cases cover delayed inherited pipes/late stderr, pipe timeout, unsuccessful exits/signals, hung parent and spawn failure. CI runs them; added file-presence guards for new scripts when manually building older immutable release tags. Prior Telegram media changes preserved.
+
+Passed node --test scripts/native-process.test.mjs (5), real >8s default-deadline probe (9,568ms pipe drain, clean parent), actionlint 1.7.12 (shellcheck/pyflakes unavailable), bash -n on all workflow blocks, Node syntax checks and git diff --check. Native smoke attempt built frontend/debug executable but refused to start because user's Omnia is running; asked user to close it, no process killed. Native runtime source unchanged; preceding application checks remain recorded above/below. Local Ubuntu container unavailable (Docker socket permission denied; no passwordless sudo); no new Ubuntu success claimed. Evidence: docs/evidence/ubuntu-shutdown.json.
+
+User closed Omnia; reran WEBKIT_DISABLE_DMABUF_RENDERER=1 npm run smoke:linux successfully (exit 0): 22 native checks, five clean main-process exits and closed output streams, no fatal diagnostics. Frontend/debug native build also passed. Fresh report: docs/evidence/linux-ubuntu-shutdown-native.json; ubuntu-shutdown.json updated. This is the local Arch/Hyprland run with the explicit graphics workaround, not a new Ubuntu Actions run.
+
+Next: validate on GitHub against a commit/tag containing the fix. Push/CI dispatch/release publication not performed. The old 0.11.1 release tag still points to old driver code; rerunning that old release does not incorporate this fix. Tags were not moved.
+
+## Telegram AppImage audio crash — 2026-10-22
+
+Diagnosed repeated Linux AppImage WebKitWebProcess SIGABRTs, including PID 3358 on October 21 at 23:00:34. Missing GStreamer appsink/autoaudiosink logs precede the crash; recorded abort callsite plus embedded binary assertion strings identify MediaPlayerPrivateGStreamer::createAudioSink() at line 1601. No OOM kill. Full symbols unavailable; temporary extracted core deleted. Downloaded 0.11.0 AppImage omits plugin directory/hooks and bundles GStreamer 1.24.2 while host plugins are 1.28.6.
+
+Enabled Tauri AppImage bundleMediaFramework; CI installs base/good/libav plugins and verifies finished packages using scripts/check-appimage-media.py plus a small C WebKit fixture. Probe checks bundled library/plugin provenance, plays silent WAV, advances/closes three AudioContexts; ephemeral profile/private XDG storage, no accounts or installed-app changes. Old AppDir fails plugin check and reproduces native WebKit termination when playback is attempted. Rebuilt 0.11.1 AppImage passes with normal renderer and explicit DMABUF workaround. This fixes packaging; real Telegram retry is still unverified. No route/profile/UI/permission changes.
+
+Passed: npm run lint/typecheck/test:coverage (117 tests)/crap (threshold 8, existing four mapping warnings); npm run native:test (26 tests)/native:lint (fmt/clippy); frontend build; native release build (ELF/DEB/RPM/AppImage); actionlint 1.7.12 (shellcheck/pyflakes unavailable); git diff --check. WEBKIT_DISABLE_DMABUF_RENDERER=1 CARGO_BUILD_JOBS=2 npm run smoke:linux passes 22 checks/five clean exits. Evidence: docs/evidence/linux-telegram-media.json and linux-telegram-media-native.json. Existing graphics shutdown gap remains distinct; CI/Windows/macOS and provider accounts not tested here.
+
+Build on this Arch host: PATH=/tmp/omnia-build-tools/usr/bin:$PATH CARGO_BUILD_JOBS=3 GSTREAMER_HELPERS_DIR=/usr/lib/gstreamer-1.0 npm run native:build. Private patchelf was extracted without system installation. New AppImage: src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.1_amd64.AppImage (~151 MiB; expected increase for media). Verify with python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.1_amd64.AppImage". Next: user retries Telegram from this rebuilt package; old installed/downloaded build and autostart were left untouched. No push/publish/install or reference modification.
+
 ## Versioned artifact names — 2026-10-19
 
 All Actions artifacts now use omnia-<app version>-<platform/format>, including native evidence. Prepare reads the checked-out package version on every run, checks Tauri/Cargo agreement and validates a safe version string before emitting it. Release-tag matching remains enforced. Release downloads select the same version prefix. Native installer filenames already contain the version and are preserved. README examples updated.
