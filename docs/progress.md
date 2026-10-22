@@ -16,8 +16,15 @@ tests, fmt and clippy. Native release packaging passed using isolated
 `CARGO_TARGET_DIR=src-tauri/target/release-0.11.2-build` because the user's
 running 0.11.1 process locks the normal release executable; the application,
 MSI and NSIS outputs report 0.11.2. No installed application was stopped or
-replaced. Cross-platform installers and Ubuntu behavior remain subject to the
-tag-triggered GitHub Actions run.
+replaced.
+
+Committed release source as `a889a5f`, created lightweight tag `0.11.2`, pushed
+main/tag and published the GitHub release. Release workflow 39810539172 passed:
+frontend, Windows/macOS/Linux native jobs, Ubuntu WebKitGTK smoke, finished
+AppImage media probe and the final attachment job. The release has six assets:
+RPM, DEB, AppImage, macOS DMG, Windows MSI and Windows NSIS EXE. The tag remains
+fixed at the verified release commit. Provider-account and hardware behavior
+remain limited as documented; CI success does not establish those claims.
 
 ## Frontend Actions test discovery failure — 2026-10-22
 

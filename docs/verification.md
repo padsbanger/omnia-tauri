@@ -181,6 +181,12 @@ Windows: lint, typecheck, 117 frontend tests with coverage (92.92% statements,
 clippy. An isolated-target `npm.cmd run native:build` produced version-0.11.2
 EXE, MSI and NSIS outputs without stopping or overwriting the user's running
 0.11.1 application; [checksums](releases/0.11.2-SHA256SUMS.txt) are retained.
-No installer was installed. Linux/macOS packages, Ubuntu smoke behavior and
-release asset attachment require the GitHub release workflow and are not
-claimed from this Windows run.
+No installer was installed locally.
+
+[Release workflow 39810539172](https://github.com/padsbanger/omnia-tauri/actions/runs/39810539172)
+then passed frontend verification, all three native platform jobs, Ubuntu
+WebKitGTK smoke, finished-AppImage media verification and the final release
+attachment job. The 0.11.2 release contains RPM, DEB, AppImage, macOS DMG,
+Windows MSI and Windows NSIS EXE assets. These CI results verify deterministic
+fixtures and packaging; they do not establish real provider login/media/DRM or
+hardware behavior.
