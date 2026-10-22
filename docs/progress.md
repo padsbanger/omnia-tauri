@@ -1,5 +1,30 @@
 # Progress record
 
+## Frontend Actions test discovery failure — 2026-10-22
+
+Diagnosed public Actions run 39740294247/job 119695654619 at commit
+`f5da3d3`: the dedicated Node subprocess regression passed, then
+`npm run test:coverage` failed. The new `scripts/native-process.test.mjs` uses
+`node:test`, but Vitest's default discovery also collected it and reported
+"No test suite found" after the 117 frontend tests passed.
+
+Scoped Vitest discovery to `src/**/*.test.{ts,tsx}` in `vitest.config.ts`.
+The subprocess regression remains owned by its separate
+`node --test scripts/native-process.test.mjs` workflow step, while frontend
+coverage remains scoped to application source.
+
+Passed locally on Windows: lint, typecheck, one coverage run (13 files / 117
+tests; 92.92% statements, 88.23% branches), CRAP threshold 8, frontend build,
+24 Rust tests, fmt and clippy. `git diff --check` passes. Native packaging reached
+the release executable replacement but could not overwrite it because the
+user's autostarted release process (PID 500) is running; it was not stopped.
+The Linux-specific inherited-pipe Node regression already passed in the cited
+Ubuntu job; when run additionally on Windows, three cases passed and two
+inherited-pipe timing cases failed because Windows closes those descendant
+stdio handles immediately. No native/runtime source changed. Next: push this
+one-line test-discovery fix and let Actions rerun; rerun Windows packaging only
+after the user closes the running app if fresh installers are required.
+
 ## Ubuntu Actions shutdown failure — 2026-10-22
 
 Read failure run 39638971121/job 119357256149 and its native evidence through gh. Ubuntu compiled, passed Rust checks, then smoke failed after 12 checks: mainExit={code:0,signal:null}, terminationRequested=false, stdioTimeout=true. Driver confused Node's close (including inherited pipes) with parent exit, then awaited close unbounded while still asserting the earlier null timeout. Same source's push run 39638862915 passed; this is an intermittent smoke shutdown deadline, not a compile error.

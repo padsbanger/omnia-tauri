@@ -157,3 +157,18 @@ The full suite was attempted with `npm.cmd run smoke` and direct driver reruns. 
 ### 0.11.1 release preparation (2026-10-21)
 
 Synchronized npm/Tauri/Cargo versions and both lockfiles at 0.11.1 without dependency changes. Passed lint, typecheck, 117 frontend tests with coverage (92.92% statements, 88.23% branches), CRAP 8 (four existing mapping warnings), 24 Rust tests, fmt/clippy and frontend/Windows native build. `npm.cmd run smoke -- --window-only` rebuilt and passed all three focused restart assertions with five graceful closes; [version-specific evidence](evidence/windows-0.11.1-restart.json). App and NSIS PE versions and the MSI database's ProductVersion all read 0.11.1. [Artifact metadata](evidence/windows-artifacts.json), [checksums](releases/0.11.1-SHA256SUMS.txt) and [prepared release notes](releases/0.11.1.md) are recorded. No installers were installed, and no release was published. Full-suite screen-pixel failure from the preceding change remains unresolved; this metadata-only bump did not rerun that suite or establish Linux/macOS/provider verification.
+
+### Frontend CI test discovery repair (2026-10-22)
+
+Actions run 39740294247/job 119695654619 passed its dedicated
+`node --test scripts/native-process.test.mjs` step but failed coverage because
+Vitest also discovered that `node:test` file and found no Vitest suite. Vitest
+now explicitly includes only `src/**/*.test.{ts,tsx}`; the subprocess tests
+remain a separate workflow concern.
+
+On Windows, lint, typecheck, coverage (13 files / 117 tests; 92.92% statements,
+88.23% branches), CRAP 8, frontend build, 24 Rust tests, fmt and clippy passed.
+The native packaging attempt was blocked when Cargo could not replace the
+running release executable (autostart PID 500); the process was not stopped.
+No native code changed, and no native smoke claim is made for this test-config
+repair.
