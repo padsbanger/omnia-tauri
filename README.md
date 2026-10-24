@@ -22,11 +22,11 @@ npm.cmd run native:build
 
 Native outputs are under `src-tauri/target/release/`; Windows bundles are in `bundle/msi/` and `bundle/nsis/`. Builds do not install the app, register the `omnia:` protocol, change autostart, or publish anything. Unsigned packages require normal platform trust handling. Signing/notarization and updater infrastructure are optional and are not configured.
 
-CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.11.2, Linux downloads are separate `omnia-0.11.2-Linux-deb`, `omnia-0.11.2-Linux-rpm`, and `omnia-0.11.2-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.11.2-Windows` and `omnia-0.11.2-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the app version and retain it when attached to releases.
+CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.11.3, Linux downloads are separate `omnia-0.11.3-Linux-deb`, `omnia-0.11.3-Linux-rpm`, and `omnia-0.11.3-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.11.3-Windows` and `omnia-0.11.3-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the version and retain it when attached to releases.
 
 Release builds use size optimization, ThinLTO, one codegen unit and symbol stripping, following [Tauri's size guidance](https://v2.tauri.app/concept/size/) and [Cargo's profiles reference](https://doc.rust-lang.org/cargo/reference/profiles.html). Panic unwinding is preserved. Development builds retain their normal debugging configuration. Release compilation can take longer, and stripped release binaries provide less detailed crash symbols; for diagnostic builds override `CARGO_PROFILE_RELEASE_STRIP=none` and `CARGO_PROFILE_RELEASE_DEBUG=1` in the build environment. Local before/after measurements are in [bundle size evidence](docs/evidence/linux-bundle-size.json).
 
-Current prepared version: **0.11.2**. See the [release notes](docs/releases/0.11.2.md).
+Current prepared version: **0.11.3**. See the [release notes](docs/releases/0.11.3.md).
 
 ## Release downloads
 
@@ -160,7 +160,7 @@ Build machines need GStreamer base/good plugins and libav (`gst-plugins-base gst
 Verify the finished package, using a desktop or `xvfb-run -a dbus-run-session --` in CI:
 
 ```sh
-python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.2_amd64.AppImage"
+python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.11.3_amd64.AppImage"
 ```
 
 This requires Python 3, a C compiler, pkg-config and WebKitGTK/GStreamer development headers. It extracts into temporary storage, checks that required media elements resolve inside the package, then runs silent HTML audio and three Web Audio contexts with the bundled engine and launch hooks. It uses an ephemeral profile and isolated XDG paths. It does not test Telegram accounts, audible hardware output, calls or DRM. The graphics workaround above is a separate issue; use its explicit environment prefix if needed on the affected host.
