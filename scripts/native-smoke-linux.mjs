@@ -219,6 +219,45 @@ async function ready(label) {
     "Website ready",
   );
 }
+function appWindow() {
+  const windows = execFileSync(
+    "xdotool",
+    ["search", "--all", "--pid", String(app.pid)],
+    { encoding: "utf8" },
+  )
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  assert.equal(windows.length, 1, "Expected one native window for pointer input");
+  return windows[0];
+}
+async function nativeClick(label, selector) {
+  const previousStyle = await evaluate(
+    label,
+    `(async()=>{const element=document.querySelector(${JSON.stringify(selector)});if(!element)throw Error('Missing download control');const previous=element.getAttribute('style');window.__omniaSmokeClicked=false;element.addEventListener('click',()=>window.__omniaSmokeClicked=true,{once:true});element.style.cssText='position:fixed;inset:0;display:block;z-index:2147483647;opacity:1';await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));return previous;})()`,
+  );
+  const view = await control({ op: "inspect", label });
+  try {
+    execFileSync("xdotool", [
+      "mousemove",
+      "--window",
+      appWindow(),
+      String(view.x + Math.floor(view.width / 2)),
+      String(view.y + Math.floor(view.height / 2)),
+      "click",
+      "1",
+    ]);
+    await until(
+      () => evaluate(label, `window.__omniaSmokeClicked===true`),
+      `Native pointer click ${selector}`,
+    );
+  } finally {
+    await evaluate(
+      label,
+      `(()=>{const element=document.querySelector(${JSON.stringify(selector)});const previous=${JSON.stringify(previousStyle)};if(previous===null)element.removeAttribute('style');else element.setAttribute('style',previous);return true;})()`,
+    );
+  }
+}
 const identity = (label) =>
   evaluate(
     label,
@@ -240,19 +279,17 @@ try {
     b = names["fixture-b"];
   await ready(a);
   await ready(b);
-  await evaluate(
-    a,
-    `(()=>{document.querySelector('#download').click();document.querySelector('#download').click();document.querySelector('#blob-download').click();return true;})()`,
-  );
-  for (const file of [
-    "fixture-download.txt",
-    "fixture-download (1).txt",
-    "fixture-blob.txt",
-  ])
+  for (const [selector, file] of [
+    ["#download", "fixture-download.txt"],
+    ["#download", "fixture-download (1).txt"],
+    ["#blob-download", "fixture-blob.txt"],
+  ]) {
+    await nativeClick(a, selector);
     await until(
       async () => access(join(directory, "downloads", file)).then(() => true),
       `Native download ${file}`,
     );
+  }
   assert.equal(
     await readFile(join(directory, "downloads", "fixture-download.txt"), "utf8"),
     "native download fixture",

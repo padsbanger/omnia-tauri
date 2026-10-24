@@ -1,5 +1,25 @@
 # Progress record
 
+## Linux 0.11.3 CI download-smoke repair — 2026-10-24
+
+GitHub run 40096706678 passed the frontend job and the Linux build's compile,
+unit-test and lint stages, then failed only in the WebKitGTK Xvfb smoke. The
+regression was introduced with the 0.11.3 download check: it invoked
+`HTMLAnchorElement.click()` through injected JavaScript, but WebKit intentionally
+does not treat that synthetic activation as a user download gesture.
+
+The Linux driver now exposes each deterministic fixture control across the live
+route view, uses `xdotool` under the disposable Xvfb display to deliver a real
+pointer click, confirms the page received it, and waits for each HTTP/duplicate/
+blob file before the next click. CI installs the explicit `xdotool` runtime
+dependency. The deprecated Node 20 actions were also moved to their official
+Node 24 majors. Production download handling and permissions are unchanged.
+
+Windows verification passed: syntax check, lint, typecheck, 118 frontend tests
+with coverage, CRAP threshold 8, 26 Rust tests, fmt/clippy, frontend build and
+native EXE/MSI/NSIS build. The WebKitGTK smoke cannot run on this Windows host;
+the fix remains implemented-unverified until the amended Actions job runs.
+
 ## Hosted downloads — 2026-10-24
 
 Implemented explicit route/popup download handling for the reported Gmail,

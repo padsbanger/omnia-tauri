@@ -1,5 +1,28 @@
 # Verification record
 
+## Linux 0.11.3 Actions repair — 2026-10-24
+
+[GitHub Actions run 40096706678](https://github.com/padsbanger/omnia-tauri/actions/runs/40096706678/job/120880395667)
+failed only at `WebKitGTK smoke in disposable Xvfb and Secret Service session`;
+the preceding Linux frontend build, Cargo check, 26 Rust tests and fmt/clippy
+steps passed. The newly added download regression used injected `element.click()`
+calls, which are synthetic rather than WebKit user gestures. The fixture now
+uses Xvfb-local `xdotool` pointer input and verifies both click delivery and each
+completed file sequentially. The workflow installs `xdotool` explicitly.
+The run's separate Node 20 deprecation warning is addressed with
+`actions/checkout@v5`, `actions/setup-node@v5`, `actions/upload-artifact@v6`
+and `actions/download-artifact@v6`, whose official releases use Node 24.
+
+Executed locally after the repair: `node --check scripts/native-smoke-linux.mjs`,
+`npm.cmd run lint`, `npm.cmd run typecheck`, `npm.cmd run test:coverage` (118
+tests; 92.97% statements, 88.49% branches, 89.49% functions, 93.98% lines),
+`npm.cmd run crap` (threshold 8; the existing four callback-mapping warnings),
+`npm.cmd run native:test` (26 passed), `npm.cmd run native:lint`, `npm.cmd run
+build`, `npm.cmd run native:build`, and `git diff --check`; all passed. The
+Windows native build produced the 0.11.3 executable, MSI and NSIS bundles. No
+installer was run. The repaired WebKitGTK/Xvfb check is not claimed as passed on
+Windows and awaits the next Linux Actions run.
+
 Historical Windows verification on 2026-10-19: Windows 11 build 26200 x64, WebView2 155.0.4283.62, Node 24.15, npm 11.12, Rust 1.98 MSVC. Reference commit: 4c76ff5bd8d574448ec2c99d890373a64059c287. At that Windows baseline, Linux/macOS CI definitions existed but had not run. The later Linux continuation and its default-renderer shutdown failure are recorded below.
 
 Initial migration baseline (the Gmail follow-up is recorded below):
