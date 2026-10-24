@@ -4,6 +4,7 @@ mod auth;
 #[cfg(target_os = "linux")]
 mod autostart_linux;
 mod config;
+mod downloads;
 mod drawer_layer;
 #[cfg(target_os = "linux")]
 mod geometry_linux;
@@ -113,6 +114,30 @@ async fn smoke_inspect(
     )
 }
 #[tauri::command]
+async fn smoke_download_fixture(
+    webview: tauri::Webview,
+    app: tauri::AppHandle,
+    state: tauri::State<'_, runtime::Native>,
+) -> Result<(), String> {
+    security::trusted(&webview)?;
+    if !cfg!(debug_assertions) || std::env::var_os("OMNIA_SMOKE").is_none() {
+        return Err("Smoke mode disabled".into());
+    }
+    let rt = state.0.lock().await;
+    let label = rt
+        .live
+        .get("fixture-a")
+        .ok_or("Fixture route unavailable")?;
+    let route = app
+        .get_webview(label)
+        .ok_or("Fixture webview unavailable")?;
+    route
+        .eval(
+            r#"(()=>{let attempts=0;const trigger=()=>{const link=document.querySelector('#download'),blob=document.querySelector('#blob-download');if(!link||!blob)return false;link.click();link.click();blob.click();return true;};if(!trigger()){const timer=setInterval(()=>{if(trigger()||++attempts>100)clearInterval(timer);},50);}})()"#,
+        )
+        .map_err(|e| e.to_string())
+}
+#[tauri::command]
 async fn spike_seed(
     webview: tauri::Webview,
     state: tauri::State<'_, runtime::Native>,
@@ -161,6 +186,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             spike_seed,
             smoke_inspect,
+            smoke_download_fixture,
             runtime::layout_views,
             runtime::route_action,
             runtime::unread_snapshot,

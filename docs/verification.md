@@ -190,3 +190,34 @@ attachment job. The 0.11.2 release contains RPM, DEB, AppImage, macOS DMG,
 Windows MSI and Windows NSIS EXE assets. These CI results verify deterministic
 fixtures and packaging; they do not establish real provider login/media/DRM or
 hardware behavior.
+
+### Hosted downloads (2026-10-24)
+
+Route views and their native popup windows now install Tauri/Wry download
+handlers and permit the narrow automatic-download permission while retaining
+the existing denial for other portable permission kinds. Windows' separate
+origin-aware WebView2 handler permits automatic downloads only when both the
+requester and top-level origin pass the route policy. Downloads go to the OS
+Downloads directory with sanitized basenames and collision suffixes; no page
+supplies a filesystem path. The trusted shell receives only route ID, bounded
+filename and state, and displays progress/completion/failure.
+
+Focused lint, typecheck and 19 UI/bridge tests passed. Rust check passed. A real
+Windows WebView2 run created and content-verified an HTTP attachment twice as
+`fixture-download.txt` and `fixture-download (1).txt`, plus a generated blob as
+`fixture-blob.txt`; the native trace recorded three requested and three
+successful completion callbacks without URL queries or paths. The extended
+suite then passed the existing lifecycle/profile/security/OIDC/API/unread and
+Telegram checks before hitting the previously documented live-drawer desktop
+pixel prerequisite (sampled black rather than fixture blue). Therefore the
+download scenario is native-tested, but this run is not reported as a complete
+suite pass. Provider accounts, Linux and macOS downloads remain unverified;
+the Linux native driver now contains the equivalent HTTP/blob regression for
+the next desktop run.
+
+Final gates passed: 118 frontend tests with 92.97% statements / 88.49%
+branches, CRAP threshold 8 (the four existing ambiguous callback warnings), 26
+Rust tests, fmt, clippy, lint, typecheck, frontend build, and Windows release
+build. The release build produced the 0.11.2 MSI and NSIS bundles. Download
+hashes and the partial native-run scope are retained in
+[Windows download evidence](evidence/windows-downloads.json).

@@ -56,6 +56,7 @@ pub fn install(view: &tauri::Webview, route_url: String, gmail: bool) -> Result<
                             COREWEBVIEW2_PERMISSION_KIND_MICROPHONE
                                 | COREWEBVIEW2_PERMISSION_KIND_CAMERA
                                 | COREWEBVIEW2_PERMISSION_KIND_NOTIFICATIONS
+                                | COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS
                         );
                         let allow = allowed_kind
                             && trusted_origin(&requester, &route_url, gmail)

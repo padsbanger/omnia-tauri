@@ -158,6 +158,7 @@ async function launch(args = [], environment = {}) {
     XDG_CONFIG_HOME: join(directory, "config"),
     XDG_CACHE_HOME: join(directory, "cache"),
     OMNIA_SMOKE: "1",
+    OMNIA_DOWNLOAD_DIR: join(directory, "downloads"),
     OMNIA_SMOKE_CONTROL: directory,
     OMNIA_API_BASE_URL: "http://127.0.0.1:7890",
     AUTHENTIK_DISCOVERY_URL: "http://127.0.0.1:7890/discovery",
@@ -239,6 +240,28 @@ try {
     b = names["fixture-b"];
   await ready(a);
   await ready(b);
+  await evaluate(
+    a,
+    `(()=>{document.querySelector('#download').click();document.querySelector('#download').click();document.querySelector('#blob-download').click();return true;})()`,
+  );
+  for (const file of [
+    "fixture-download.txt",
+    "fixture-download (1).txt",
+    "fixture-blob.txt",
+  ])
+    await until(
+      async () => access(join(directory, "downloads", file)).then(() => true),
+      `Native download ${file}`,
+    );
+  assert.equal(
+    await readFile(join(directory, "downloads", "fixture-download.txt"), "utf8"),
+    "native download fixture",
+  );
+  assert.equal(
+    await readFile(join(directory, "downloads", "fixture-blob.txt"), "utf8"),
+    "native blob fixture",
+  );
+  check("Native HTTP and blob downloads use collision-safe isolated destinations");
   for (const [label, value] of [
     [a, "Alice"],
     [b, "Bob"],

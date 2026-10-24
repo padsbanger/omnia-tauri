@@ -67,8 +67,9 @@ describe("typed native bridge", () => {
     await native.onUnread(callback);
     await native.onFavicon(callback);
     await native.onSession(callback);
+    await native.onDownload(callback);
     for (const [, handler] of vi.mocked(listen).mock.calls)
       handler({ payload: { total: 1 } } as never);
-    expect(callback).toHaveBeenCalledTimes(3);
+    expect(callback).toHaveBeenCalledTimes(4);
   });
 });

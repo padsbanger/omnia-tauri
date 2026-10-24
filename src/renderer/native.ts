@@ -21,6 +21,11 @@ export type Unread = {
   revision: number;
   unreadCounts: { routeId: string; count: number }[];
 };
+export type DownloadStatus = {
+  routeId: string;
+  fileName: string;
+  state: "started" | "finished" | "failed";
+};
 export type Placement = {
   routeId: string;
   bounds: { x: number; y: number; width: number; height: number };
@@ -119,4 +124,6 @@ export const native = {
     listen<{ Ok?: null; Err?: string }>("session-changed", (e) =>
       callback(e.payload),
     ),
+  onDownload: (callback: (value: DownloadStatus) => void) =>
+    listen<DownloadStatus>("download-status", (e) => callback(e.payload)),
 };

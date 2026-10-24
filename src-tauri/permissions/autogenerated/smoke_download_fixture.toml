@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-smoke-download-fixture"
+description = "Enables the smoke_download_fixture command without any pre-configured scope."
+commands.allow = ["smoke_download_fixture"]
+
+[[permission]]
+identifier = "deny-smoke-download-fixture"
+description = "Denies the smoke_download_fixture command without any pre-configured scope."
+commands.deny = ["smoke_download_fixture"]

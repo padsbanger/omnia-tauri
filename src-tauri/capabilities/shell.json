@@ -21,6 +21,7 @@
     "allow-workspace-preferences",
     "allow-app-settings",
     "allow-set-startup",
-    "allow-smoke-inspect"
+    "allow-smoke-inspect",
+    "allow-smoke-download-fixture"
   ]
 }

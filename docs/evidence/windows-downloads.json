@@ -1,0 +1,37 @@
+{
+  "date": "2026-10-24",
+  "platform": "Windows 11 x64 / native WebView2",
+  "targetBaseCommit": "54c1f1f",
+  "status": "download scenario passed; complete suite later failed unrelated drawer pixel prerequisite",
+  "method": "Debug Tauri executable, two native child WebView2 routes, loopback HTTP attachment and page-created blob; download trigger occurred before Playwright attached to the route debugging port",
+  "checks": {
+    "httpAttachment": "passed",
+    "duplicateCollisionSuffix": "passed",
+    "blobDownload": "passed",
+    "nativeRequestedCallbacks": 3,
+    "nativeSuccessfulCompletionCallbacks": 3,
+    "fullSuite": "failed later when on-screen pixel sampling returned black instead of the expected fixture blue"
+  },
+  "files": [
+    {
+      "name": "fixture-download.txt",
+      "bytes": 23,
+      "sha256": "AB37698D718299071110B77D910F03F0CF93DD190C8121506F6A161CDCF6A2F9"
+    },
+    {
+      "name": "fixture-download (1).txt",
+      "bytes": 23,
+      "sha256": "AB37698D718299071110B77D910F03F0CF93DD190C8121506F6A161CDCF6A2F9"
+    },
+    {
+      "name": "fixture-blob.txt",
+      "bytes": 19,
+      "sha256": "0E8CB534111DF863D060E9452D7B57C8D2F155DCDE9B0D589111A4C53F78FEF1"
+    }
+  ],
+  "limits": [
+    "No Gmail, Telegram or Messenger account was used",
+    "Linux and macOS native download regressions were not run on this host",
+    "A deterministic fixture establishes engine integration, not provider compatibility"
+  ]
+}

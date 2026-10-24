@@ -65,6 +65,7 @@ beforeEach(() => {
   vi.mocked(native.onUnread).mockResolvedValue(() => {});
   vi.mocked(native.onSession).mockResolvedValue(() => {});
   vi.mocked(native.onFavicon).mockResolvedValue(() => {});
+  vi.mocked(native.onDownload).mockResolvedValue(() => {});
   vi.mocked(native.unread).mockResolvedValue({
     total: 3,
     revision: 1,
@@ -260,6 +261,17 @@ describe("retained Omnia workflows", () => {
     await waitFor(() =>
       expect(screen.queryByText("Rejected state")).toBeNull(),
     );
+  });
+  it("reports download progress, completion and failure", async () => {
+    render(<App />);
+    await screen.findByRole("button", { name: "Manage routes" });
+    const download = vi.mocked(native.onDownload).mock.calls[0][0];
+    download({ routeId: "a", fileName: "report.pdf", state: "started" });
+    await screen.findByText("Downloading report.pdf…");
+    download({ routeId: "a", fileName: "report.pdf", state: "finished" });
+    await screen.findByText("Downloaded report.pdf to Downloads.");
+    download({ routeId: "a", fileName: "photo.jpg", state: "failed" });
+    await screen.findByText("Failed to download photo.jpg.");
   });
   it("surfaces sign-in, create and settings failures", async () => {
     const user = userEvent.setup();

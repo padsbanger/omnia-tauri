@@ -7,7 +7,9 @@ use std::{
     time::{Duration, Instant},
 };
 use tauri::{
-    webview::{NewWindowResponse, WebviewBuilder},
+    webview::{
+        DownloadEvent, NewWindowResponse, PermissionKind, PermissionResponse, WebviewBuilder,
+    },
     Emitter, Manager, WebviewUrl,
 };
 
@@ -103,6 +105,12 @@ impl Runtime {
         let title_app = app.clone();
         let trace = crate::navigation_trace::Trace::new(&self.root, &label);
         let nav_trace = trace.clone();
+        let download_directory = crate::downloads::directory(app, &self.root)?;
+        let download_app = app.clone();
+        let download_route_id = id.to_string();
+        let download_trace = trace.clone();
+        let popup_download_directory = download_directory.clone();
+        let popup_download_route_id = download_route_id.clone();
         trace.record("route_created", &url);
         let mut builder = WebviewBuilder::new(&label, WebviewUrl::External(url))
             .data_directory(profile)
@@ -123,6 +131,10 @@ impl Runtime {
                 let popup_nav = popup_hosts.clone();
                 let popup_trace = trace.popup();
                 let nested_trace = popup_trace.clone();
+                let popup_download_trace = popup_trace.clone();
+                let popup_download_app = popup_app.clone();
+                let popup_download_route_id = popup_download_route_id.clone();
+                let popup_download_directory = popup_download_directory.clone();
                 let p = tauri::WebviewWindowBuilder::new(
                     &popup_app,
                     format!("{popup_label}-popup"),
@@ -138,7 +150,19 @@ impl Runtime {
                     nested_trace.record("nested_popup_denied", &u);
                     NewWindowResponse::Deny
                 })
-                .on_permission_request(|_, _| tauri::webview::PermissionResponse::Deny)
+                .on_download(move |_, event| {
+                    crate::downloads::handle(
+                        &popup_download_app,
+                        &popup_download_route_id,
+                        &popup_download_directory,
+                        &popup_download_trace,
+                        event,
+                    )
+                })
+                .on_permission_request(|_, permission| match permission {
+                    PermissionKind::AutomaticDownloads => PermissionResponse::Allow,
+                    _ => PermissionResponse::Deny,
+                })
                 .build();
                 match p {
                     Ok(window) => {
@@ -151,7 +175,19 @@ impl Runtime {
                     }
                 }
             })
-            .on_permission_request(|_, _| tauri::webview::PermissionResponse::Deny)
+            .on_download(move |_, event: DownloadEvent<'_>| {
+                crate::downloads::handle(
+                    &download_app,
+                    &download_route_id,
+                    &download_directory,
+                    &download_trace,
+                    event,
+                )
+            })
+            .on_permission_request(|_, permission| match permission {
+                PermissionKind::AutomaticDownloads => PermissionResponse::Allow,
+                _ => PermissionResponse::Deny,
+            })
             .on_document_title_changed(move |_, title| {
                 let mut s = signals.lock().unwrap();
                 if s.generations.get(&route_id) != Some(&generation) {

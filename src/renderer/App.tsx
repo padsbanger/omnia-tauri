@@ -6,7 +6,12 @@ import Sidemenu from "./components/Sidemenu";
 import CreateNewRouteForm from "./components/CreateNewRouteForm";
 import ManageRoutesDrawer from "./components/ManageRoutesDrawer";
 import SettingsDrawer from "./components/SettingsDrawer";
-import { native, message, type Unread } from "./native";
+import {
+  native,
+  message,
+  type DownloadStatus,
+  type Unread,
+} from "./native";
 import { useAppStore, useAuthStore } from "./store";
 import { routeAction } from "./actions";
 import { placements } from "./layout";
@@ -241,6 +246,28 @@ export default function App() {
   const { loading, retry } = useSession();
   const user = useAuthStore((s) => s.user);
   const error = useAppStore((s) => s.error);
+  const [download, setDownload] = useState<DownloadStatus | null>(null);
+  useEffect(() => {
+    let timer = 0;
+    const subscription = native.onDownload((status) => {
+      window.clearTimeout(timer);
+      if (status.state === "failed") {
+        setDownload(null);
+        useAppStore
+          .getState()
+          .setError(`Failed to download ${status.fileName}.`);
+        return;
+      }
+      setDownload(status);
+      if (status.state === "finished") {
+        timer = window.setTimeout(() => setDownload(null), 5000);
+      }
+    });
+    return () => {
+      window.clearTimeout(timer);
+      void subscription.then((off) => off());
+    };
+  }, []);
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === ",") {
@@ -268,6 +295,16 @@ export default function App() {
             >
               ×
             </button>
+          </div>
+        )}
+        {download && (
+          <div
+            role="status"
+            className="shrink-0 bg-emerald-50 px-4 py-2 text-sm text-emerald-900"
+          >
+            {download.state === "started"
+              ? `Downloading ${download.fileName}…`
+              : `Downloaded ${download.fileName} to Downloads.`}
           </div>
         )}
         <div className="min-h-0 flex-1">

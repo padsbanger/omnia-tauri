@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 import { spawn, spawnSync } from 'node:child_process';
 import { createServer } from 'node:http';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -12,6 +12,9 @@ if (process.platform !== 'win32') throw new Error('This driver verifies Windows 
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
 if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app before native smoke testing; its single-instance handler must not receive fixture commands.');
 const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
+const downloadDirectory=join(process.cwd(),'reports','native-downloads');
+await rm(downloadDirectory,{recursive:true,force:true});
+await mkdir(downloadDirectory,{recursive:true});
 const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
 const backend=mockBackend('http://127.0.0.1:7890');
 backend.state.routes[0].icon='telegram';
@@ -27,7 +30,7 @@ async function connect(port) {
   throw error;
 }
 async function launch(args=[]) {
-  app=spawn('src-tauri/target/debug/omnia-tauri.exe',args,{env:{...process.env,OMNIA_SMOKE:'1',OMNIA_API_BASE_URL:'http://127.0.0.1:7890',AUTHENTIK_DISCOVERY_URL:'http://127.0.0.1:7890/discovery',AUTHENTIK_CLIENT_ID:'native-fixture'},windowsHide:true,stdio:'pipe'});
+  app=spawn('src-tauri/target/debug/omnia-tauri.exe',args,{env:{...process.env,OMNIA_SMOKE:'1',OMNIA_DOWNLOAD_DIR:downloadDirectory,OMNIA_API_BASE_URL:'http://127.0.0.1:7890',AUTHENTIK_DISCOVERY_URL:'http://127.0.0.1:7890/discovery',AUTHENTIK_CLIENT_ID:'native-fixture'},windowsHide:true,stdio:'pipe'});
   app.stderr.on('data',b=>process.stderr.write(b));
   shellBrowser=await connect(9222);
   const page=shellBrowser.contexts()[0].pages()[0];
@@ -122,6 +125,16 @@ try {
   shell = await launch();
   await invoke(shell,'auth_logout');await shell.reload();await shell.getByRole('button',{name:'Sign in',exact:true}).waitFor();
   await invoke(shell,'spike_seed');await layout(shell);
+  await invoke(shell,'smoke_download_fixture');
+  for(const file of ['fixture-download.txt','fixture-download (1).txt','fixture-blob.txt']) {
+    for(let attempt=0;attempt<80;attempt++) {
+      try { await access(join(downloadDirectory,file)); break; }
+      catch { if(attempt===79) throw new Error(`Native download did not create ${file}`); await delay(100); }
+    }
+  }
+  assert.equal(await readFile(join(downloadDirectory,'fixture-download.txt'),'utf8'),'native download fixture');
+  assert.equal(await readFile(join(downloadDirectory,'fixture-blob.txt'),'utf8'),'native blob fixture');
+  check('Native HTTP and blob downloads use collision-safe isolated destinations and report completion');
   let [a,b]=await routes();
   for(const [p,value] of [[a,'Alice'],[b,'Bob']]){await p.getByRole('textbox').fill(value);await p.locator('#save').click();}
   assert.equal(await a.locator('#identity').textContent(),'Alice');assert.equal(await b.locator('#identity').textContent(),'Bob');
@@ -164,6 +177,8 @@ try {
   const navigationEvents=trace.trim().split('\n').map(line=>JSON.parse(line)).filter(event=>event.timeMs>=Date.parse(evidence.started));
   assert.ok(navigationEvents.some(event=>event.event==='popup_created'));
   assert.ok(navigationEvents.some(event=>event.event==='external_target'&&event.destination.host==='localhost'));
+  assert.equal(navigationEvents.filter(event=>event.event==='download_finished').length,3);
+  assert.ok(navigationEvents.some(event=>event.event==='download_finished'&&event.destination.scheme==='blob'));
   assert.ok(navigationEvents.every(event=>!('query' in event.destination)&&!('fragment' in event.destination)));
   check('Native callbacks record popup creation and external handoff in redacted local trace');
   // Intercept HTTPS fixture responses in the real WebView2 views. No Google

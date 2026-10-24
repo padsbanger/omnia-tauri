@@ -1,5 +1,28 @@
 # Progress record
 
+## Hosted downloads — 2026-10-24
+
+Implemented explicit route/popup download handling for the reported Gmail,
+Telegram and Messenger failure. Downloads use the OS Downloads folder,
+sanitized collision-safe names, narrow automatic-download permission and
+trusted-shell progress/completion/failure events. Added HTTP, duplicate-name
+and blob fixtures plus Rust and React coverage. Windows WebView2 created and
+content-verified all three files and recorded native completion callbacks.
+Real provider accounts were not used. The full native run later reached the
+known live-drawer screen-pixel prerequisite and sampled black instead of blue,
+so it is not labelled a complete suite pass. Linux/macOS handlers compile in
+the shared implementation; the Linux native regression is added but has not
+been run on this Windows host.
+
+Passed: lint, typecheck, frontend build, 118 frontend tests with coverage
+(92.97% statements / 88.49% branches), CRAP 8, 26 Rust tests, fmt, clippy and
+Windows native release packaging (MSI/NSIS). Download-specific evidence is in
+`docs/evidence/windows-downloads.json`.
+
+Next: rerun `npm run smoke:linux` on a Linux desktop and manually retry actual
+Gmail, Telegram and Messenger downloads; rerun the Windows full suite on an
+unobscured capturable desktop for the unrelated drawer pixel assertion.
+
 ## 0.11.2 release — 2026-10-22
 
 Prepared patch version 0.11.2 from main after the failed 0.11.1 release run.
