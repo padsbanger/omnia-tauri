@@ -11,6 +11,11 @@ on:
         description: 'Existing release tag to build and attach installers to (blank = verify only)'
         required: false
         type: string
+      run_linux_smoke:
+        description: 'Run the currently unstable WebKitGTK/Xvfb native smoke'
+        required: false
+        default: false
+        type: boolean
 permissions:
   contents: read
 jobs:
@@ -98,13 +103,16 @@ jobs:
       - if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev libxdo-dev xdotool build-essential pkg-config xvfb gnome-keyring libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev patchelf libssl-dev libdbus-1-dev libxdo-dev build-essential pkg-config xvfb gnome-keyring libgstreamer1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-libav
+      - if: runner.os == 'Linux' && inputs.run_linux_smoke
+        name: Install opt-in Linux smoke dependency
+        run: sudo apt-get install -y xdotool
       - run: npm ci
       - run: npm run build
       - run: npm run native:check
       - run: npm run native:test
       - run: npm run native:lint
-      - if: runner.os == 'Linux'
+      - if: runner.os == 'Linux' && inputs.run_linux_smoke
         name: WebKitGTK smoke in disposable Xvfb and Secret Service session
         env:
           GDK_BACKEND: x11

@@ -1,5 +1,15 @@
 # Progress record
 
+## Linux native smoke disabled in CI — 2026-10-24
+
+Run 40105572288 confirmed that frontend, Windows, macOS, Linux compilation,
+Rust tests and lint pass, while the WebKitGTK/Xvfb native smoke still fails.
+Per product direction, that unstable smoke is now disabled by default for push,
+pull-request and release builds so it no longer blocks Linux packaging. The
+script remains available as `npm run smoke:linux` and can be opted into only by
+a manual workflow dispatch with `run_linux_smoke: true`. This is a test-gating
+change, not evidence that the Linux native behavior passes.
+
 ## Linux 0.11.3 CI download-smoke repair — 2026-10-24
 
 GitHub run 40096706678 passed the frontend job and the Linux build's compile,
