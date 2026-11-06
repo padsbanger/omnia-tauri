@@ -12,7 +12,7 @@ pub struct Config {
 impl Default for Config {
     fn default() -> Self {
         Self {
-            api_base_url: "https://omnia.pripyat.cloud".into(),
+            api_base_url: "https://omnia.zaton.net".into(),
             client_id: "kSYcRwghR9ItrtPB5opL0lvWYPpFZfUtXFtzAv22".into(),
             redirect_uri: "omnia://auth/callback".into(),
             discovery_url:

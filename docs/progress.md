@@ -1,5 +1,26 @@
 # Progress record
 
+## Release 0.11.4 — 2026-11-06
+
+Prepared patch release for the backend API default change. Synchronized npm,
+Cargo and Tauri versions/lockfiles and README artifact examples; added release
+notes. Passed lint, typecheck, 118 frontend tests with coverage (92.97%
+statements / 88.49% branches), CRAP 8, frontend build, 26 Rust tests, fmt
+and clippy. Windows native packaging attempted with the release executable
+currently running; final outcome pending. No new native smoke or live backend
+authentication claim. Publishing the tag triggers existing three-platform
+verification/build and installer attachment; Linux native smoke remains opt-in.
+
+## Backend API default — 2026-11-06
+
+Changed the Rust default API base URL and README configuration examples to
+https://omnia.zaton.net. Explicit config.json/environment overrides still take
+precedence; OIDC discovery configuration is unchanged. Passed native:test
+(26 tests), native:lint (fmt/clippy) and git diff --check on Windows.
+No native packaging or live backend/authentication test was performed for this
+configuration-only change. Run npm.cmd start or rebuild the installer to use it.
+
+
 ## Linux native smoke disabled in CI — 2026-10-24
 
 Run 40105572288 confirmed that frontend, Windows, macOS, Linux compilation,
