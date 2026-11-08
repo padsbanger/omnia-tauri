@@ -61,6 +61,31 @@ Every unchecked case is **implemented-unverified** unless the engine matrix mark
 - [ ] Custom HTTP(S): safe favicon/fallback, redirects, mailto/tel, localhost, malicious scheme rejection and popup policy.
 - [ ] Spotify: login, full protected-track playback, seek, pause/resume, next track and background audio. A homepage or a short preview is not sufficient.
 - [ ] Other presets: Slack, WhatsApp, Messenger, TradingView, X, ChatGPT and Claude login/navigation.
+- [ ] File uploads: drag a disposable file from Explorer/Finder/the Linux file manager
+      onto Messenger's conversation attachment area; confirm preview, send and download
+      contents. Also exercise its attachment picker, a popup and a restored route.
+      Test each engine separately. Do not run Windows Omnia elevated when dragging
+      from a normal Explorer window (Windows integrity levels can prevent drops).
+
+### Hosted upload drag handling (2026-11-08)
+
+The pinned Tauri 2.12.4 builders default to native drag/drop interception.
+Its [documented opt-out](https://docs.rs/tauri/2.12.4/tauri/webview/struct.WebviewBuilder.html#method.disable_drag_drop_handler)
+is required for HTML5 drag/drop on Windows. The shell already opted out, while
+hosted route views and popups did not. Both now opt out; browser file access comes
+from the user's drop/picker, without new native filesystem capabilities.
+
+`npm run build`, `cargo build --manifest-path src-tauri/Cargo.toml --features custom-protocol --locked`,
+then `node scripts/native-smoke.mjs --uploads-only` reproduce the Windows fixture
+checks with the normal app closed. They verify file names, sizes and actual HTTP
+upload bytes from route and popup file inputs/CDP drops, and popup command denial.
+The full Windows smoke includes the route upload checks too. The CDP drop does
+**not** exercise Explorer/OLE interception; that manual check and real Messenger
+account behavior remain unverified. No Linux/macOS runtime verification was made
+for this change. The user subsequently confirmed Messenger dragging works in
+the rebuilt Windows app (2026-11-08); the provider checklist remains open for
+the broader picker/send/download and other-platform cases.
+[Native fixture evidence](evidence/windows-uploads.json).
 - [ ] OS notification click/activation, OS taskbar/dock badge rendering and autostart yes/no/minimized in an installed test environment.
 - [ ] Signed/notarized installers, installed system-browser protocol association and updater design, if distribution requires them.
 

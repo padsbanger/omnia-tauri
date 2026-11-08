@@ -68,6 +68,16 @@ Native evidence: [Wayland](evidence/native-linux.json), [Xwayland](evidence/nati
 
 ## Scope limits requiring follow-up
 
+Hosted file uploads (2026-11-08): route and popup builders now disable Tauri's
+native drag/drop interception so websites receive browser File/DataTransfer events.
+Windows file input and CDP-delivered file drop uploads are **implemented-and-tested**
+against a local HTTP fixture, including popup uploads and privileged-command denial
+([evidence](evidence/windows-uploads.json)). Explorer-to-website drops and actual
+Messenger attachments were initially **implemented-unverified**; CDP bypasses OS
+drag interception. The user subsequently confirmed Messenger dragging works in
+the rebuilt Windows app (2026-11-08). Other OS/provider upload workflows remain
+**implemented-unverified**.
+
 Latest Gmail trace: YouTube's account step stayed internal, but the subsequent accounts.google.pl step was external. Shared pinned Google account hosts and exact HTTPS regional matching are implemented and unit-tested. The full native fixture now passes through YouTube and Polish/UK/German account hosts without an external handoff, retaining profile isolation (windows-gmail-regional-after.json). Actual account retry is pending; synthetic native success does not establish provider login success.
 
 The Windows native architecture is feasible for isolated website workspaces. This does not establish full product/provider parity. Next gates are the account/hardware checklist, mixed-DPI testing and running the supplied Linux/macOS CI plus native smoke cases. Media permission adapters on WebKit and macOS named-store removal need implementation/verification. If an essential service fails DRM or login on the system engine, retain that service in Electron or explicitly open it in the system browser after the product decision; no fallback is silently applied.

@@ -113,6 +113,9 @@ impl Runtime {
         let popup_download_route_id = download_route_id.clone();
         trace.record("route_created", &url);
         let mut builder = WebviewBuilder::new(&label, WebviewUrl::External(url))
+            // Websites must receive browser-native File/DataTransfer drops.
+            // Tauri's default handler intercepts them on Windows for IPC events.
+            .disable_drag_drop_handler()
             .data_directory(profile)
             .on_navigation(move |url| nav_trace.navigate(url, &nav_hosts))
             .on_new_window(move |url, features| {
@@ -140,6 +143,7 @@ impl Runtime {
                     format!("{popup_label}-popup"),
                     WebviewUrl::External("about:blank".parse().unwrap()),
                 )
+                .disable_drag_drop_handler()
                 .window_features(features)
                 .data_directory(popup_profile.clone())
                 .title("Omnia — service sign-in")

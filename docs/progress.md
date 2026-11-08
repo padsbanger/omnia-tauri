@@ -1,5 +1,47 @@
 # Progress record
 
+## Release 0.11.5 — 2026-11-08
+
+User confirmed Messenger dragging works after rebuilding/launching the Windows
+fix, then authorized commit, push and GitHub release. Synchronized npm/Tauri/
+Cargo versions and lockfiles at 0.11.5; updated README examples and release
+notes. Automated native upload evidence remains CDP-based; user confirmation
+is separately attributed, and Linux/macOS/provider gaps are retained.
+Passed 0.11.5 lint/typecheck, 118 frontend tests with coverage (92.97%
+statements/88.49% branches), CRAP 8, frontend build, 26 Rust tests, fmt/clippy
+and diff checks. Native packaging attempted but could not replace the running
+release executable (Windows error 5); the app was left running. The identical
+runtime fix already passed Windows packaging and upload smoke before the
+version bump. GitHub release workflow will build fresh 0.11.5 installers;
+publication does not establish successful CI or cross-platform runtime behavior.
+
+## Messenger file dragging — 2026-11-08
+
+Found that only the shell disabled Tauri's default drag/drop handler; hosted
+route and popup builders retained interception. Pinned Tauri 2.12.4 docs and
+local Wry sources confirm that interception replaces Windows browser HTML5
+drops. Both builders now call disable_drag_drop_handler(); no capabilities,
+profile data, provider scripts or installed settings changed.
+
+Added shared HTTP upload/file-input/drop fixture and Windows native coverage,
+including an --uploads-only mode. Native WebView2 uploaded exact file names,
+sizes and bytes via input/CDP drop from a route and popup; popup privileged
+command denial still passes. Initial popup test incorrectly reused a stale CDP
+target list; reconnecting as the existing popup test does fixed discovery.
+Successful rerun: docs/evidence/windows-uploads.json (six checks, exit 0).
+CDP does not exercise Explorer/OLE drag interception. Actual Explorer-to-Messenger
+drag and provider-account behavior remain unverified; Linux/macOS not run.
+
+Passed npm.cmd run lint/typecheck/test:coverage (118 tests, 92.97% statements,
+88.49% branches)/crap (threshold 8)/build; native:test (26), native:lint
+(fmt/clippy); cargo build --manifest-path src-tauri/Cargo.toml --features
+custom-protocol --locked; node scripts/native-smoke.mjs --uploads-only; Node
+syntax checks and git diff --check. npm.cmd run native:build passed, producing
+the release executable and Windows MSI/NSIS installers (version unchanged).
+User closed the running app for testing; no user process was killed. Next:
+reopen rebuilt executable and manually retry disposable Messenger attachment
+drag/picker; repeat on Linux/macOS. No push/release/install performed.
+
 ## Release 0.11.4 — 2026-11-06
 
 Prepared patch release for the backend API default change. Synchronized npm,

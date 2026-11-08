@@ -11,7 +11,7 @@ import { websiteFixture } from './website-fixture.mjs';
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
 if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app before native smoke testing; its single-instance handler must not receive fixture commands.');
-const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
+const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : process.argv.includes('--uploads-only') ? 'window persistence and fixture uploads (CDP drop, not OS drag)' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
 const downloadDirectory=join(process.cwd(),'reports','native-downloads');
 await rm(downloadDirectory,{recursive:true,force:true});
 await mkdir(downloadDirectory,{recursive:true});
@@ -136,6 +136,36 @@ try {
   assert.equal(await readFile(join(downloadDirectory,'fixture-blob.txt'),'utf8'),'native blob fixture');
   check('Native HTTP and blob downloads use collision-safe isolated destinations and report completion');
   let [a,b]=await routes();
+  const uploadPath=join(downloadDirectory,'fixture-upload.txt');
+  const uploadContent='Omnia native file upload fixture';
+  await writeFile(uploadPath,uploadContent);
+  async function verifyUpload(page) {
+    await page.waitForFunction(()=>document.querySelector('#upload-result').textContent.length>0);
+    assert.deepEqual(JSON.parse(await page.locator('#upload-result').textContent()),{name:'fixture-upload.txt',size:Buffer.byteLength(uploadContent),content:uploadContent});
+    await page.locator('#upload-result').evaluate(element=>element.textContent='');
+  }
+  async function verifyDrop(page) {
+    const session=await page.context().newCDPSession(page);
+    const box=await page.locator('#upload-drop').boundingBox();
+    for(const type of ['dragEnter','dragOver','drop'])await session.send('Input.dispatchDragEvent',{type,x:box.x+20,y:box.y+20,data:{items:[],files:[uploadPath],dragOperationsMask:1}});
+    await verifyUpload(page);
+    await session.detach();
+  }
+  await a.locator('#upload-input').setInputFiles(uploadPath);
+  await verifyUpload(a);
+  await verifyDrop(a);
+  check('Native WebView2 file input and CDP file drop upload actual bytes over HTTP (OS drag interception requires Explorer check)');
+  if(process.argv.includes('--uploads-only')) {
+    await a.locator('#popup').click();await delay(1000);
+    const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
+    const popup=popupBrowser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/popup'));
+    assert.ok(popup,'Upload popup must exist');
+    await popup.locator('#upload-input').setInputFiles(uploadPath);await verifyUpload(popup);
+    await verifyDrop(popup);
+    assert.equal(await popup.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);
+    await popup.close();
+    check('Popup file input/drop uploads actual bytes; privileged commands remain denied');
+  } else {
   for(const [p,value] of [[a,'Alice'],[b,'Bob']]){await p.getByRole('textbox').fill(value);await p.locator('#save').click();}
   assert.equal(await a.locator('#identity').textContent(),'Alice');assert.equal(await b.locator('#identity').textContent(),'Bob');
   check('Two same-origin native profiles have independent localStorage and cookies');
@@ -376,6 +406,7 @@ try {
   const replay=spawn('src-tauri/target/debug/omnia-tauri.exe',[callback],{env:{...process.env,OMNIA_SMOKE:'1'},windowsHide:true,stdio:'ignore'});await new Promise(resolve=>replay.once('exit',resolve));await delay(300);
   assert.equal(backend.state.requests.filter(r=>r.grant==='authorization_code').length,exchanged);check('Already-running instance rejects replayed callback without exchanging the code');
   await invoke(shell,'auth_logout');
+  }
   }
   evidence.contractRequests=backend.state.requests;
   evidence.passed=true;
