@@ -1,5 +1,12 @@
 # Platform feasibility and provider verification
 
+Vaultwarden autofill (2026-11-14): Rust crypto/transport and Tauri evaluation are
+platform-independent implementations, but only Windows WebView2 was exercised.
+The [native evidence](evidence/windows-vaultwarden.json) uses a synthetic encrypted
+vault and intercepted HTTPS form, including the actual trusted drawer. Real
+account authentication, provider forms, Linux and macOS remain unverified for
+this feature. See [supported subset and follow-up checklist](vaultwarden.md).
+
 Gmail popup return (2026-11-14): Windows WebView2 fixture verifies the mailbox
 returns to the originating route, closes the popup and retains its cookie;
 the other route remains isolated and privileged commands remain denied.

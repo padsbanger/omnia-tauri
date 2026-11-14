@@ -5,6 +5,8 @@
     "shell"
   ],
   "permissions": [
+    "allow-vault-availability",
+    "allow-vault-status", "allow-vault-configure", "allow-vault-unlock", "allow-vault-lock", "allow-vault-matches", "allow-vault-fill",
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "allow-spike-seed",

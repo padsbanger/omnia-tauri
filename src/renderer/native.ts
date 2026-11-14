@@ -5,6 +5,18 @@ import type { WindowLayout } from "../common/drawer";
 import type { AppSettings, StartupOpenMode } from "../common/settings";
 
 export type User = { id: string; email: string; name?: string };
+export type VaultAvailability = { unlocked: boolean; hasMatches: boolean };
+export type VaultStatus = {
+  server: string | null;
+  unlocked: boolean;
+  skipped: number;
+};
+export type VaultMatches = {
+  ticket: string;
+  origin: string;
+  entries: { id: string; name: string; username: string }[];
+  skipped: number;
+};
 type NativeRoute = Omit<Route, "path" | "partition" | "faviconUrl"> & {
   faviconUrl?: string | null;
 };
@@ -62,6 +74,15 @@ async function call<T>(
 }
 let revision = Date.now();
 export const native = {
+  vaultStatus: () => call<VaultStatus>("vault_status"),
+  vaultAvailability: (id: string | null) => call<VaultAvailability>("vault_availability", { id }),
+  vaultConfigure: (server: string) => call<void>("vault_configure", { server }),
+  vaultUnlock: (input: { email: string; password: string; code: string }) =>
+    call<void>("vault_unlock", { input }),
+  vaultLock: () => call<void>("vault_lock"),
+  vaultMatches: (id: string) => call<VaultMatches>("vault_matches", { id }),
+  vaultFill: (ticket: string, entry: string) =>
+    call<string>("vault_fill", { ticket, entry }),
   async bootstrap(): Promise<Workspace> {
     const s = await call<Omit<Workspace, "routes"> & { routes: NativeRoute[] }>(
       "workspace_bootstrap",

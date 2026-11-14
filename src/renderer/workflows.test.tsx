@@ -54,6 +54,8 @@ beforeEach(() => {
   useAppStore.getState().apply(workspace);
   useAuthStore.getState().setUser(workspace.user);
   vi.mocked(native.bootstrap).mockResolvedValue(workspace);
+  vi.mocked(native.vaultStatus).mockResolvedValue({ server: null, unlocked: false, skipped: 0 });
+  vi.mocked(native.vaultAvailability).mockResolvedValue({ unlocked: false, hasMatches: false });
   vi.mocked(native.layout).mockResolvedValue(true);
   for (const fn of [
     native.preferences,

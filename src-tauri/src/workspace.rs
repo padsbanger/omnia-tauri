@@ -437,6 +437,7 @@ pub async fn auth_logout(
     auth: tauri::State<'_, Service>,
 ) -> Result<()> {
     security::trusted(&webview)?;
+    app.state::<crate::vault::Service>().0.lock().await.lock();
     auth.1.notify_waiters();
     if let Some(window) = app.get_webview_window("auth") {
         window.close().map_err(|e| e.to_string())?;

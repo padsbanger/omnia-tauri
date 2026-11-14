@@ -6,6 +6,7 @@ import { useAppStore, useAuthStore } from "../store";
 import { signOut } from "../actions";
 import { useRouteReordering } from "../routeReordering";
 import WorkspaceLayoutSwitcher from "./WorkspaceLayoutSwitcher";
+import VaultButton from "./VaultButton";
 
 const Sidemenu = () => {
   const {
@@ -125,6 +126,7 @@ const Sidemenu = () => {
       >
         Settings
       </Button>
+      <VaultButton routeId={activeTab} open={() => setActiveDrawer("vault")} />
       <WorkspaceLayoutSwitcher
         onWindowLayoutChange={setWindowLayout}
         routeCount={routes.length}

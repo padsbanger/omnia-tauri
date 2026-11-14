@@ -1,6 +1,6 @@
 import { Route } from "./routes";
 
-export type DrawerKind = "create" | "manage" | "settings";
+export type DrawerKind = "create" | "manage" | "settings" | "vault";
 
 export type WindowLayout = "single" | "spread" | "matrix";
 

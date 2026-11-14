@@ -1,0 +1,178 @@
+{
+  "scope": "Vaultwarden synthetic encrypted vault and intercepted HTTPS native autofill; no real account",
+  "platform": "win32",
+  "started": "2026-11-14T16:04:35.179Z",
+  "checks": [
+    {
+      "name": "Normal window dimensions survive native close and restart",
+      "drawerOpen": false,
+      "maximized": false,
+      "minimized": false,
+      "pixels": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          8,
+          8,
+          8
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 700,
+        "width": 1000
+      },
+      "title": "Omnia Tauri",
+      "views": [],
+      "windowSize": {
+        "height": 700,
+        "width": 1000
+      }
+    },
+    {
+      "name": "Maximized window and full-size trusted shell survive native close and restart",
+      "drawerOpen": false,
+      "maximized": true,
+      "minimized": false,
+      "pixels": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          255,
+          255,
+          255
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 1369,
+        "width": 2560
+      },
+      "title": "Omnia Tauri",
+      "views": [],
+      "windowSize": {
+        "height": 1369,
+        "width": 2560
+      }
+    },
+    {
+      "name": "Minimizing preserves maximized preference; unmaximize restores original bounds and persists",
+      "afterMinimize": {
+        "drawerOpen": false,
+        "maximized": true,
+        "minimized": false,
+        "pixels": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            255,
+            255,
+            255
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 1369,
+          "width": 2560
+        },
+        "title": "Omnia Tauri",
+        "views": [],
+        "windowSize": {
+          "height": 1369,
+          "width": 2560
+        }
+      },
+      "restored": {
+        "drawerOpen": false,
+        "maximized": false,
+        "minimized": false,
+        "pixels": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            138,
+            228,
+            206
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 700,
+          "width": 1000
+        },
+        "title": "Omnia Tauri",
+        "views": [],
+        "windowSize": {
+          "height": 700,
+          "width": 1000
+        }
+      }
+    },
+    {
+      "name": "Native HTTP and blob downloads use collision-safe isolated destinations and report completion"
+    },
+    {
+      "name": "Native WebView2 file input and CDP file drop upload actual bytes over HTTP (OS drag interception requires Explorer check)"
+    },
+    {
+      "name": "Native Rust prelogin, password hash, authenticator challenge, authenticated sync and stable device identity"
+    },
+    {
+      "name": "Native autofill decrypts item key, safely transfers quoted Unicode credentials to one view, never submits; selection is single use"
+    },
+    {
+      "name": "Remote native route denied all vault commands"
+    },
+    {
+      "name": "Native service popup denied vault access"
+    },
+    {
+      "name": "Navigation and nonmatching entry reject native fills"
+    },
+    {
+      "name": "Cross-origin form action rejected without filling"
+    },
+    {
+      "name": "Altered ciphertext rejected by native MAC verification"
+    },
+    {
+      "name": "Destroyed view generation invalidates fill"
+    },
+    {
+      "name": "Lock invalidates a concurrent unlock and clears session"
+    },
+    {
+      "name": "Actual trusted drawer unlocks, lists and fills a live child webview through the typed bridge"
+    },
+    {
+      "name": "Omnia logout locks the vault"
+    }
+  ],
+  "contractRequests": [
+    {
+      "path": "/token",
+      "grant": "authorization_code"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    },
+    {
+      "path": "/routes",
+      "method": "GET"
+    }
+  ],
+  "passed": true
+}

@@ -6,6 +6,7 @@ import Sidemenu from "./components/Sidemenu";
 import CreateNewRouteForm from "./components/CreateNewRouteForm";
 import ManageRoutesDrawer from "./components/ManageRoutesDrawer";
 import SettingsDrawer from "./components/SettingsDrawer";
+import VaultDrawer from "./components/VaultDrawer";
 import {
   native,
   message,
@@ -233,6 +234,9 @@ function Workspace() {
               )}
               {store.activeDrawer === "settings" && (
                 <SettingsDrawer closeDrawer={close} />
+              )}
+              {store.activeDrawer === "vault" && (
+                <VaultDrawer routeId={store.activeTab} closeDrawer={close} />
               )}
             </div>
           </div>

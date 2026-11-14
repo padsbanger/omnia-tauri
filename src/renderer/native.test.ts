@@ -12,6 +12,13 @@ const route = {
 };
 beforeEach(() => vi.clearAllMocks());
 describe("typed native bridge", () => {
+  it("passes the vault server only to the native settings command", async () => {
+    vi.mocked(invoke).mockResolvedValue(undefined);
+    await native.vaultConfigure("https://vault.example.com/path");
+    expect(invoke).toHaveBeenCalledWith("vault_configure", {
+      server: "https://vault.example.com/path",
+    });
+  });
   it("normalizes absent native favicon values before passing routes to retained components", async () => {
     vi.mocked(invoke).mockResolvedValue({
       routes: [{ ...route, faviconUrl: null }],

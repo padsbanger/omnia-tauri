@@ -7,6 +7,8 @@ import assert from 'node:assert/strict';
 import { setTimeout as delay } from 'node:timers/promises';
 import { mockBackend } from './mock-backend.mjs';
 import { websiteFixture } from './website-fixture.mjs';
+import { vaultFixture } from './vault-fixture.mjs';
+import { vaultNativeChecks } from './vault-native-checks.mjs';
 
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
@@ -17,8 +19,11 @@ await rm(downloadDirectory,{recursive:true,force:true});
 await mkdir(downloadDirectory,{recursive:true});
 const check = (name, details = {}) => { evidence.checks.push({ name, ...details }); console.log('PASS', name); };
 const backend=mockBackend('http://127.0.0.1:7890');
+const vault = vaultFixture();
+if (process.argv.includes('--vault-only')) evidence.scope = 'Vaultwarden synthetic encrypted vault and intercepted HTTPS native autofill; no real account';
 backend.state.routes[0].icon='telegram';
 const fixture = createServer(async (req,res) => {
+  if(await vault.handle(req,res)) return;
   if(await backend.handle(req,res)) return;
   websiteFixture(req, res);
 });
@@ -155,7 +160,54 @@ try {
   await verifyUpload(a);
   await verifyDrop(a);
   check('Native WebView2 file input and CDP file drop upload actual bytes over HTTP (OS drag interception requires Explorer check)');
-  if(process.argv.includes('--gmail-popup-only')) {
+  if(process.argv.includes('--vault-only')) {
+    await vaultNativeChecks({shell,a,b,invoke,check,fixture:vault,action,connect,routeBrowsers});
+    await invoke(shell,'auth_logout'); await shell.reload();
+    backend.state.routes[0].icon='gmail';
+    await shell.getByRole('button',{name:'Sign in',exact:true}).click();
+    await shell.getByRole('button',{name:'Settings',exact:true}).waitFor({timeout:25000});
+    const workspaceRoutes=(await invoke(shell,'workspace_bootstrap')).routes;
+    const workspaceEpoch=workspaceRoutes.find(route=>route.id==='fixture-a').epoch;
+    const workspaceBrowser=await connect(9323+workspaceEpoch*2);routeBrowsers.push(workspaceBrowser);
+    const page=workspaceBrowser.contexts()[0].pages().find(page=>page.url().includes(':7890'));
+    await page.route('https://accounts.google.com/**',r=>r.fulfill({status:200,contentType:'text/html',body:'<form><input autocomplete="username" id="user"><input type="password" id="pass"></form>'}));
+    await page.goto('https://accounts.google.com/ServiceLogin');
+    assert.equal(await shell.getByRole('button',{name:'Vault: matching logins',exact:true}).count(),0);
+    await shell.getByRole('button',{name:'Settings',exact:true}).click();
+    await shell.getByLabel('Vaultwarden server URL',{exact:true}).fill('https://vault.example.com');
+    await shell.getByRole('button',{name:'Save server',exact:true}).click();
+    await shell.getByRole('button',{name:'Save server',exact:true}).waitFor();
+    await shell.waitForFunction(() => !Array.from(document.querySelectorAll('button')).find(b=>b.textContent==='Save server')?.disabled);
+    await shell.getByLabel('Email',{exact:true}).fill('fixture@example.invalid');
+    await shell.getByLabel('Master password',{exact:true}).fill('synthetic master password');
+    await shell.getByLabel('Authenticator code (if enabled)',{exact:true}).fill('123456');
+    await shell.getByRole('button',{name:'Unlock vault',exact:true}).click();
+    await shell.getByText('Vault unlocked. Use the sidebar vault icon when matching logins are available.',{exact:true}).waitFor();
+    await shell.getByRole('button',{name:'Close',exact:true}).click();
+    await shell.getByRole('button',{name:'Vault: matching logins',exact:true}).waitFor();
+    await shell.getByRole('link',{name:'Fixture B',exact:true}).click();
+    await shell.getByRole('button',{name:'Vault: no matching logins',exact:true}).waitFor();
+    assert.ok(await shell.getByRole('button',{name:'Vault: no matching logins',exact:true}).isDisabled());
+    await shell.getByRole('link',{name:'Fixture A',exact:true}).click();
+    await shell.getByRole('button',{name:'Vault: matching logins',exact:true}).click();
+    assert.equal(await shell.getByLabel('Master password',{exact:true}).count(),0);
+    await shell.getByRole('button',{name:'Fill Fixture login alice@example.invalid',exact:true}).click();
+    await shell.getByText('Login filled. Submit the form when ready.',{exact:true}).waitFor();
+    assert.equal(await page.locator('#user').inputValue(),'alice@example.invalid');
+    assert.ok((await page.locator('#pass').inputValue()).startsWith('synthetic'));
+    await shell.getByRole('button',{name:'Close',exact:true}).click();
+    check('Settings unlocks vault; sidebar icon is enabled only for matching active route; picker fills without configuration controls');
+    await page.goto('http://127.0.0.1:7890/');
+    await shell.getByRole('button',{name:'Vault: no matching logins',exact:true}).waitFor();
+    check('Native route navigation updates sidebar match availability');
+    await shell.getByRole('button',{name:'Settings',exact:true}).click();
+    await shell.getByRole('button',{name:'Lock vault',exact:true}).click();
+    await shell.getByRole('button',{name:'Vault: no matching logins',exact:true}).waitFor({state:'detached'});
+    check('Locking in Settings hides the sidebar vault icon');
+    await invoke(shell,'auth_logout');
+    assert.equal((await invoke(shell,'vault_status')).unlocked,false);
+    check('Omnia logout locks the vault');
+  } else if(process.argv.includes('--gmail-popup-only')) {
     // The HTTP fixture opens a genuine native popup with opener/session sharing.
     // HTTPS responses below are intercepted; no Google accounts/network are used.
     for(const [page,value] of [[a,'Alice'],[b,'Bob']]) {

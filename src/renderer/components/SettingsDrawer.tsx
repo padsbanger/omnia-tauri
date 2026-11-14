@@ -2,6 +2,7 @@ import { native } from "../native";
 import { Button, Description, Label } from "@heroui/react";
 import { useEffect, useState } from "react";
 import { type AppSettings, type StartupOpenMode } from "../../common/settings";
+import VaultSettings from "./VaultSettings";
 
 type SettingsDrawerProps = {
   closeDrawer: () => void;
@@ -123,6 +124,8 @@ const SettingsDrawer = ({ closeDrawer }: SettingsDrawerProps) => {
             })}
           </div>
         </section>
+
+        <VaultSettings />
 
         <div className="mt-auto flex justify-end">
           <Button

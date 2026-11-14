@@ -1,5 +1,95 @@
 # Progress record
 
+## Release 0.12.0 — 2026-11-14
+
+User authorized commit, push and GitHub release for the Vaultwarden integration.
+Synchronized package/Tauri/Cargo versions and lockfiles, updated README release
+examples and added docs/releases/0.12.0.md. Version 0.12.0 passed lint,
+typecheck, 135 frontend tests with 93.26% statement/88.01% branch coverage and
+CRAP8, 34 Rust tests, fmt/clippy, frontend build and Git whitespace checks.
+`npm.cmd run native:build` passed (exit code 0) and produced the Windows
+executable plus MSI/NSIS bundles. Native fixture evidence for the feature is recorded below;
+real vault authentication and Linux/macOS runtime remain unverified. Release
+assets will be attached by the repository's release workflow after CI succeeds.
+
+## Vault Settings and contextual sidebar icon — 2026-11-14
+
+Moved connection/unlock/lock controls to Settings → Vaultwarden. The old sidebar
+text button is replaced by a vault icon: hidden when locked, disabled without
+matching logins, highlighted/enabled for the active native route's current HTTPS
+URL. Opening it loads a separate picker automatically. Read-only shell-authorized
+`vault_availability` returns only booleans and does not mint/invalidate tickets.
+Polls every two seconds handle navigation/expiry; local changes refresh promptly.
+Stale route and late fill responses are ignored; secret handling is unchanged.
+
+Passed lint/typecheck, 135 frontend tests and coverage (93.26% statements, 88.01%
+branches)/CRAP8, 34 Rust tests and fmt/clippy, frontend/debug native builds.
+Native Windows fixture passed 19 checks including settings unlock, active-route
+switching and disabled state, navigation updates, picker fill, settings lock/hide,
+and availability checks preserving a selection. Evidence:
+docs/evidence/windows-vaultwarden-settings.json. One initial CRAP failure exposed
+missing stale-fill-result coverage; added route-change success/error regression
+tests and reran successfully. `npm.cmd run native:build` passed with exit code 0,
+producing the Windows executable and MSI/NSIS installers. User closed Omnia for
+tests; the updated local executable was relaunched after packaging.
+No real-vault login, install, push or release. Other platforms remain unverified.
+
+## Configurable private Vaultwarden server — 2026-11-14
+
+Removed the user's vault hostname from source, tests and documentation. No default
+server is shipped. Fill login now has a server URL field and Save server button;
+blank disconnects. Native settings validate HTTPS without credentials/query/hash,
+preserve base subpaths, and persist a versioned value under the Omnia owner's
+local app data. Saving locks the vault and invalidates in-flight unlock results
+and selections. The sixth vault command remains shell-only with caller checks.
+Server selection and unlock revision acquisition share the runtime/vault lock
+order, so a concurrent configuration change cannot revive the previous session.
+
+Passed lint/typecheck, 130 frontend tests (93.02% statements / 87.68% branches),
+CRAP8, 34 Rust tests and fmt/clippy. Frontend/debug native build and
+`node scripts/native-smoke.mjs --vault-only` passed 17 native checks, including
+actual server-field interaction, saving/changing/clearing configuration,
+untrusted configuration-command denial and pending unlock invalidation.
+Evidence: docs/evidence/windows-vaultwarden-config.json. Source-tree hostname
+scan found no matches (excluding Git internals/generated outputs). Windows
+`npm.cmd run native:build` passed with exit code 0 and produced the executable,
+MSI and NSIS installers. Node syntax and Git whitespace checks passed.
+User closed the previously launched executable for testing. No vault login,
+account change, push, release or installation. Live providers and Linux/macOS
+remain unverified for this feature.
+
+## Vaultwarden personal-vault autofill — 2026-11-14
+
+User requested quick username/password filling from their self-hosted vault.
+Added sidebar Fill login drawer, five shell-only commands with caller checks,
+native password/TOTP login and encrypted sync, PBKDF2/Argon2id + authenticated
+type-2 cipher interoperability using RustCrypto. No SDK/CLI/Node sidecar, server
+change or credentials supplied to the agent. Only the public API config was read.
+Secrets stay transient; encrypted snapshot/user key expire after five minutes.
+One-use selections bind owner/view generation/URL; exact HTTPS origin and form
+action checks prevent cross-origin filling. Logout, lock and expiry discard keys;
+pending unlock cannot revive a locked session. At this stage device ID was the
+only persisted vault-specific value; configurable URL storage is described above.
+Secret inputs are uncontrolled and cleared on submission.
+
+Passed lint/typecheck, 126 Vitest tests with coverage (92.89% statements, 87.68%
+branches) and CRAP8; 32 Rust tests, fmt/clippy; frontend build and debug native
+build. `node scripts/native-smoke.mjs --vault-only` passed 16 native checks,
+including actual drawer unlock/list/fill, route/popup command denial, tampered
+MAC, navigation, destroyed generation, no auto-submit and lock race/logout.
+Evidence: docs/evidence/windows-vaultwarden.json. Initial tests exposed an
+accessible-name assertion mismatch and drawer complexity >8; corrected the
+accessible label and separated entry-list rendering; rerun passed.
+
+User closed running Omnia for testing. `npm.cmd run native:build` produced the
+Windows executable and MSI/NSIS installers (explicit exit code 0). Repeated the
+packaging command to disambiguate PowerShell's stderr-redirection status from
+the native process exit code. Node syntax and `git diff --check` passed.
+No push, release, install, real-vault login or account change. Version unchanged.
+Scope/next steps: docs/vaultwarden.md. Real-account login/provider forms and
+Linux/macOS remain unverified. Organization entries, SSO/non-TOTP challenges,
+popup/frame/shadow-DOM fill and persistent unlock are explicitly unsupported.
+
 ## Release 0.11.6 ? 2026-11-14
 
 User confirmed Gmail login is fixed in the rebuilt Windows app and authorized commit, push and release. Synchronized versions/lockfiles and release notes. Prior native fixture and packaging evidence applies to the runtime fix; Linux/macOS remain unverified. Version 0.11.6 passed lint/typecheck, 118 frontend tests and coverage/CRAP8, 27 Rust tests, fmt/clippy and frontend build. Windows native packaging passed immediately before this metadata-only version bump; the running app was left open. GitHub release builds will produce versioned installers.

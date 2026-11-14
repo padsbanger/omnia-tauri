@@ -77,6 +77,19 @@ Native evidence: [Wayland](evidence/native-linux.json), [Xwayland](evidence/nati
 
 ## Scope limits requiring follow-up
 
+Vaultwarden autofill (new feature, 2026-11-14): trusted drawer and native Rust
+personal-vault client in `src/renderer/components/VaultDrawer.tsx` and
+`src-tauri/src/vault/`. Windows password/TOTP fixture authentication, encrypted
+sync, exact-origin selection, native fill and authorization/lifecycle rejection
+are **implemented-and-tested** ([evidence](evidence/windows-vaultwarden.json)).
+Real-account login and Linux/macOS behavior are
+**implemented-unverified**. Shared organization entries, SSO/non-TOTP challenges,
+service-popup/frame filling and persistent unlock are **unsupported** in this
+version. The server is user-configured, saved locally per Omnia account, and has
+no default. The [configuration smoke](evidence/windows-vaultwarden-config.json)
+verifies changing servers locks the vault and cancels pending unlock/fill work.
+See [full supported subset and protocol references](vaultwarden.md).
+
 Hosted file uploads (2026-11-08): route and popup builders now disable Tauri's
 native drag/drop interception so websites receive browser File/DataTransfer events.
 Windows file input and CDP-delivered file drop uploads are **implemented-and-tested**

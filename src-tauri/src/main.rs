@@ -19,6 +19,7 @@ mod security;
 #[cfg(all(target_os = "linux", debug_assertions))]
 mod smoke_linux;
 mod unread;
+mod vault;
 mod window_state;
 mod workspace;
 
@@ -201,9 +202,18 @@ fn main() {
             workspace::route_delete,
             workspace::workspace_preferences,
             platform::app_settings,
-            platform::set_startup
+            platform::set_startup,
+            vault::vault_status,
+            vault::vault_availability,
+            vault::vault_configure,
+            vault::vault_unlock,
+            vault::vault_lock,
+            vault::vault_matches,
+            vault::vault_fill
         ])
         .setup(|app| {
+            app.manage(vault::Service::default());
+            vault::expire(app.handle());
             #[cfg(target_os = "macos")]
             {
                 let version = std::process::Command::new("/usr/bin/sw_vers")

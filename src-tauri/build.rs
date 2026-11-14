@@ -18,6 +18,13 @@ fn main() {
             "workspace_preferences",
             "app_settings",
             "set_startup",
+            "vault_status",
+            "vault_availability",
+            "vault_configure",
+            "vault_unlock",
+            "vault_lock",
+            "vault_matches",
+            "vault_fill",
         ]),
     ))
     .expect("Tauri build");
