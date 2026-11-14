@@ -154,7 +154,7 @@ async fn spike_seed(
         .map(|id| runtime::Route {
             id: (*id).into(),
             label: (*id).into(),
-            icon: "link".into(),
+            icon: "gmail".into(),
             url: "http://127.0.0.1:7890/".into(),
             internal_hosts: {
                 let mut hosts = workspace::hosts("gmail", "https://mail.google.com");

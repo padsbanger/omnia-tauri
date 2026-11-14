@@ -1,5 +1,12 @@
 # Platform feasibility and provider verification
 
+Gmail popup return (2026-11-14): Windows WebView2 fixture verifies the mailbox
+returns to the originating route, closes the popup and retains its cookie;
+the other route remains isolated and privileged commands remain denied.
+Run `npm run smoke -- --gmail-popup-only`; see
+[evidence](evidence/windows-gmail-popup-return.json). Actual Google account login
+and the new handoff on Linux/macOS remain unverified.
+
 Historical Windows evidence date: 2026-10-19. Windows host: Windows 11 build 26200, x64, WebView2 Evergreen 155.0.4283.62, current monitor scale 1.0. Tauri 2.12.4 / tauri-build 2.7.3 / tauri-runtime-wry 2.12.2 / Wry 0.57.0; exact resolved versions are in Cargo.lock. Node 24.15 and Rust 1.98 were used. No memory or performance advantage has been measured.
 
 Current Linux findings and graphics-shutdown limitations are recorded in the [Linux section](#linux-implementation-findings-2026-10-19) and [verification log](verification.md#linux-continuation--2026-10-19).

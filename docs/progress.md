@@ -1,5 +1,34 @@
 # Progress record
 
+## Release 0.11.6 ? 2026-11-14
+
+User confirmed Gmail login is fixed in the rebuilt Windows app and authorized commit, push and release. Synchronized versions/lockfiles and release notes. Prior native fixture and packaging evidence applies to the runtime fix; Linux/macOS remain unverified. Version 0.11.6 passed lint/typecheck, 118 frontend tests and coverage/CRAP8, 27 Rust tests, fmt/clippy and frontend build. Windows native packaging passed immediately before this metadata-only version bump; the running app was left open. GitHub release builds will produce versioned installers.
+
+
+## Gmail popup return — 2026-11-14
+
+Reported inbox remaining in the service sign-in window. `runtime.rs` preserved
+Google popups but never handed mailbox navigation back to the parent. Added a
+Gmail-scoped finished-load handoff for exact secure `mail.google.com/mail` paths:
+navigate the generation-specific originating route, then close the popup. Google
+account steps and normal opener/postMessage flows remain in their popup. No
+capabilities or profile paths changed. Reference window-open behavior inspected
+in the existing read-only sibling checkout.
+
+Passed lint, typecheck, 118 frontend tests with coverage (92.97% statements /
+88.49% branches), CRAP threshold 8, frontend build, 27 Rust tests, fmt/clippy,
+custom-protocol debug build, Node syntax and diff checks. Windows WebView2 smoke
+`node scripts/native-smoke.mjs --gmail-popup-only` passed six checks including
+real popup return/closure, shared cookie, untouched second route, opener message
+and privileged-command denial. HTTPS responses are intercepted fixtures, not a
+real Google login. Evidence: `docs/evidence/windows-gmail-popup-return.json`.
+The isolated smoke routes now use Gmail metadata with their existing Gmail host
+policy. `npm.cmd run native:build` passed, producing the Windows executable and
+MSI/NSIS installers (version unchanged). Real Gmail login and this handoff on
+Linux/macOS remain unverified. Next: retry the user's Gmail login in the rebuilt
+app (`npm.cmd start` or `src-tauri/target/release/omnia-tauri.exe`).
+No release/push/install performed.
+
 ## Release 0.11.5 — 2026-11-08
 
 User confirmed Messenger dragging works after rebuilding/launching the Windows

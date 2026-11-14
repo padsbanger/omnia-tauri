@@ -6,6 +6,15 @@ Status meanings: **implemented-and-tested** means the stated scope has actual lo
 
 Evidence references: `npm run test:coverage` exercises the TypeScript/domain/UI suite; `npm run native:test` exercises native logic; `npm run smoke` builds and drives actual Windows WebView2 views with deterministic HTTP/OIDC fixtures. [Native report](evidence/native-windows.json), [phase-1 report](evidence/phase1-windows.json), [verification record](verification.md), and [platform/provider checklist](platform-support.md) distinguish these scopes. Browser fixture mocks replace only external servers, not the native browser runtime.
 
+Gmail popup return follow-up (2026-11-14): `runtime.rs` and `security.rs` now
+return completed Gmail mailbox loads to the originating route and close the
+service popup. Source boundary: `src/main/windows/index.ts` window-open handler.
+**implemented-and-tested** on Windows with intercepted HTTPS fixtures, including
+session sharing, opener messaging and command denial
+([evidence](evidence/windows-gmail-popup-return.json)); **implemented-unverified**
+for actual Gmail accounts and Linux/macOS. Reproduce with
+`npm run smoke -- --gmail-popup-only`.
+
 ## Linux continuation scope
 
 Native evidence: [Wayland](evidence/native-linux.json), [Xwayland](evidence/native-linux-xwayland.json). The Linux table supersedes the historical Linux statuses in the original Windows migration matrix below. Source paths and source-behavior audit remain unchanged.

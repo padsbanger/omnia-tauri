@@ -100,6 +100,7 @@ impl Runtime {
         let popup_app = app.clone();
         let popup_label = label.clone();
         let popup_profile = profile.clone();
+        let gmail_route = route.icon == "gmail" || security::gmail_mailbox(&url);
         let signals = self.signals.clone();
         let route_id = id.to_string();
         let title_app = app.clone();
@@ -138,6 +139,11 @@ impl Runtime {
                 let popup_download_app = popup_app.clone();
                 let popup_download_route_id = popup_download_route_id.clone();
                 let popup_download_directory = popup_download_directory.clone();
+                let return_app = popup_app.clone();
+                let return_label = popup_label.clone();
+                let return_hosts = popup_hosts.clone();
+                let return_trace = popup_trace.clone();
+                let returning = std::sync::atomic::AtomicBool::new(false);
                 let p = tauri::WebviewWindowBuilder::new(
                     &popup_app,
                     format!("{popup_label}-popup"),
@@ -149,6 +155,34 @@ impl Runtime {
                 .title("Omnia — service sign-in")
                 .on_navigation(move |u| {
                     u.as_str() == "about:blank" || popup_trace.navigate(u, &popup_nav)
+                })
+                .on_page_load(move |window, payload| {
+                    let url = payload.url();
+                    if !gmail_route
+                        || payload.event() != tauri::webview::PageLoadEvent::Finished
+                        || !security::gmail_mailbox(url)
+                        || !security::internal(url, &return_hosts)
+                        || security::external_target(url, &return_hosts).is_some()
+                        || returning.swap(true, std::sync::atomic::Ordering::Relaxed)
+                    {
+                        return;
+                    }
+                    // Wait until the mailbox response has committed its session.
+                    // Navigate outside the native callback; the generation-specific
+                    // parent label cannot resolve to a restored/replaced route.
+                    let app = return_app.clone();
+                    let parent_label = return_label.clone();
+                    let popup = window.clone();
+                    let target = url.clone();
+                    let trace = return_trace.clone();
+                    tauri::async_runtime::spawn(async move {
+                        if let Some(parent) = app.get_webview(&parent_label) {
+                            if parent.navigate(target.clone()).is_ok() {
+                                trace.record("gmail_popup_returned_to_route", &target);
+                                let _ = popup.close();
+                            }
+                        }
+                    });
                 })
                 .on_new_window(move |u, _| {
                     nested_trace.record("nested_popup_denied", &u);

@@ -125,9 +125,39 @@ pub fn preserve_popup(url: &Url, hosts: &[String]) -> bool {
         || (url.as_str() == "about:blank"
             && internal(&Url::parse("https://accounts.google.com").unwrap(), hosts))
 }
+// A Gmail mailbox loaded in a sign-in popup belongs back in its route. Do
+// not treat Google account steps or arbitrary OAuth callback URLs as inboxes.
+pub fn gmail_mailbox(url: &Url) -> bool {
+    url.scheme() == "https"
+        && url.host_str() == Some("mail.google.com")
+        && url.port_or_known_default() == Some(443)
+        && url.username().is_empty()
+        && url.password().is_none()
+        && (url.path() == "/mail" || url.path().starts_with("/mail/"))
+}
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn gmail_popup_return_is_only_a_secure_mailbox() {
+        for raw in [
+            "https://mail.google.com/mail/",
+            "https://mail.google.com/mail/u/2/#inbox",
+        ] {
+            assert!(gmail_mailbox(&Url::parse(raw).unwrap()));
+        }
+        for raw in [
+            "https://accounts.google.com/ServiceLogin",
+            "https://mail.google.com/o/oauth2/callback",
+            "https://mail.google.com/mail.evil",
+            "https://mail.google.com.evil.test/mail/",
+            "http://mail.google.com/mail/",
+            "https://mail.google.com:444/mail/",
+            "https://user@mail.google.com/mail/",
+        ] {
+            assert!(!gmail_mailbox(&Url::parse(raw).unwrap()), "{raw}");
+        }
+    }
     #[test]
     fn regional_google_account_steps_are_exact_secure_and_route_scoped() {
         let hosts = crate::workspace::hosts("gmail", "https://mail.google.com");

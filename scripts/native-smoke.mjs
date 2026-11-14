@@ -11,7 +11,7 @@ import { websiteFixture } from './website-fixture.mjs';
 if (process.platform !== 'win32') throw new Error('This driver verifies Windows WebView2 only. Use the manual checklist on other engines.');
 const existingApp=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','if (Get-Process omnia-tauri -ErrorAction SilentlyContinue) { exit 1 } else { exit 0 }'],{windowsHide:true,stdio:'ignore'});
 if(existingApp.status!==0) throw new Error('Close the running Omnia Tauri app before native smoke testing; its single-instance handler must not receive fixture commands.');
-const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : process.argv.includes('--uploads-only') ? 'window persistence and fixture uploads (CDP drop, not OS drag)' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
+const evidence = { scope: process.argv.includes('--window-only') ? 'window persistence' : process.argv.includes('--gmail-popup-only') ? 'Gmail popup return with intercepted HTTPS fixture (not real account login)' : process.argv.includes('--uploads-only') ? 'window persistence and fixture uploads (CDP drop, not OS drag)' : 'full native suite', platform: process.platform, started: new Date().toISOString(), checks: [] };
 const downloadDirectory=join(process.cwd(),'reports','native-downloads');
 await rm(downloadDirectory,{recursive:true,force:true});
 await mkdir(downloadDirectory,{recursive:true});
@@ -155,7 +155,37 @@ try {
   await verifyUpload(a);
   await verifyDrop(a);
   check('Native WebView2 file input and CDP file drop upload actual bytes over HTTP (OS drag interception requires Explorer check)');
-  if(process.argv.includes('--uploads-only')) {
+  if(process.argv.includes('--gmail-popup-only')) {
+    // The HTTP fixture opens a genuine native popup with opener/session sharing.
+    // HTTPS responses below are intercepted; no Google accounts/network are used.
+    for(const [page,value] of [[a,'Alice'],[b,'Bob']]) {
+      await page.getByRole('textbox').fill(value);await page.locator('#save').click();
+    }
+    await a.locator('#popup').click();await delay(1000);
+    const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
+    const popup=popupBrowser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/popup'));
+    assert.ok(popup,'Login popup exists');
+    assert.equal(await popup.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);
+    await popup.evaluate(()=>window.opener.postMessage('auth-complete',location.origin));
+    await a.waitForFunction(()=>document.body.dataset.auth==='complete');
+    assert.ok(!popup.isClosed(),'Normal opener/postMessage flows keep their popup');
+    const inbox='https://mail.google.com/mail/u/2/#inbox';
+    const fixture=(route,headers={})=>route.fulfill({status:200,contentType:'text/html',headers,body:'<!doctype html><title>Fixture inbox</title><p id="mailbox">Mailbox</p>'});
+    await a.route('https://**/*',route=>fixture(route));
+    await popup.route('https://**/*',route=>fixture(route,{'set-cookie':'popup_session=Alice; Secure; SameSite=Lax; Path=/'}));
+    await popup.goto('https://accounts.google.com/ServiceLogin');
+    assert.ok(!popup.isClosed(),'Google account steps stay in the popup');
+    assert.ok(a.url().includes('127.0.0.1'),'Parent still waiting during login');
+    const closed=popup.waitForEvent('close');
+    await popup.goto(inbox).catch(error=>{if(!String(error).includes('closed'))throw error;});
+    await closed;
+    await a.waitForURL(inbox);await a.locator('#mailbox').waitFor();
+    assert.ok(await a.evaluate(()=>document.cookie.includes('popup_session=Alice')));
+    assert.equal(await b.locator('#identity').textContent(),'Bob');
+    assert.ok(b.url().includes('127.0.0.1'),'Other route is untouched');
+    assert.equal(await a.evaluate(()=>window.__TAURI_INTERNALS__.invoke('spike_seed').then(()=>false,()=>true)),true);
+    check('Gmail mailbox returns from native auth popup to its original route; popup closes, session persists, other route stays isolated and commands remain denied');
+  } else if(process.argv.includes('--uploads-only')) {
     await a.locator('#popup').click();await delay(1000);
     const popupBrowser=await connect(9223);routeBrowsers.push(popupBrowser);
     const popup=popupBrowser.contexts().flatMap(c=>c.pages()).find(p=>p.url().includes('/popup'));
