@@ -129,7 +129,7 @@ try {
   if (!process.argv.includes('--window-only')) {
   shell = await launch();
   await invoke(shell,'auth_logout');await shell.reload();await shell.getByRole('button',{name:'Sign in',exact:true}).waitFor();
-  await invoke(shell,'spike_seed');await layout(shell);
+  await invoke(shell,'spike_seed',{service:process.argv.includes('--links-only')?'telegram':'gmail'});await layout(shell);
   await invoke(shell,'smoke_download_fixture');
   for(const file of ['fixture-download.txt','fixture-download (1).txt','fixture-blob.txt']) {
     for(let attempt=0;attempt<80;attempt++) {
@@ -207,6 +207,74 @@ try {
     await invoke(shell,'auth_logout');
     assert.equal((await invoke(shell,'vault_status')).unlocked,false);
     check('Omnia logout locks the vault');
+  } else if(process.argv.includes('--links-only')) {
+    evidence.scope = 'Native external link dispatch; OS browser launch suppressed in fixture mode';
+    const tracePath=join(process.env.LOCALAPPDATA,'com.strielok.omnia.tauri','development','smoke','diagnostics','navigation.jsonl');
+    for (const mode of ['anchor', 'noreferrer']) {
+      const started=Date.now();
+      await a.evaluate(mode=>{
+        const button=document.createElement('button');button.id='external-link';button.textContent='External link';
+        const url='https://www.linkedin.com/jobs/view/fixture';
+        button.onclick=()=>{
+          if(mode==='anchor'){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener noreferrer';document.body.append(link);link.click();}
+          else if(mode==='noreferrer')window.open(url,'_blank','noreferrer');
+        };
+        document.body.append(button);
+      },mode);
+      await a.locator('#external-link').click();
+      let events=[];
+      for(let i=0;i<50;i++){
+        events=(await readFile(tracePath,'utf8')).trim().split('\n').map(JSON.parse).filter(e=>e.timeMs>=started);
+        if(events.some(e=>e.event==='external_launch_suppressed_fixture'&&e.destination.host==='www.linkedin.com'))break;
+        await delay(100);
+      }
+      assert.ok(events.some(e=>e.event==='external_launch_suppressed_fixture'&&e.destination.host==='www.linkedin.com'),`${mode}: ${JSON.stringify(events)}`);
+      assert.ok(a.url().includes('127.0.0.1:7890'));
+      await a.locator('#external-link').evaluate(e=>e.remove());
+      check(`${mode} link dispatches to system browser without replacing route`);
+    }
+    await a.route('https://web.telegram.org/**', route=>route.fulfill({contentType:'text/html',body:`<button id="telegram-link">Telegram link</button><script>
+      document.querySelector('button').onclick=async()=>{
+        try { if(window.isTauri) await window.__TAURI_INTERNALS__.invoke('plugin:shell|open',{path:'https://www.linkedin.com/jobs/view/fixture'});
+          else window.open('https://www.linkedin.com/jobs/view/fixture','_blank');
+          document.body.dataset.result='ok';
+        } catch(error) { document.body.dataset.result=String(error); }
+      };
+    </script>`}));
+    await a.goto('https://web.telegram.org/a/');
+    const started=Date.now();
+    await a.locator('#telegram-link').click();
+    await a.waitForFunction(()=>document.body.dataset.result);
+    assert.equal(await a.evaluate(()=>document.body.dataset.result),'ok');
+    assert.equal(await a.evaluate(()=>window.isTauri),true);
+    const events=(await readFile(tracePath,'utf8')).trim().split('\n').map(JSON.parse).filter(e=>e.timeMs>=started);
+    assert.equal(events.filter(e=>e.event==='external_launch_suppressed_fixture'&&e.destination.host==='www.linkedin.com').length,1);
+    assert.equal(a.url(),'https://web.telegram.org/a/');
+    check('Telegram Tauri-detection link path dispatches once without replacing Telegram');
+    for(const page of [shell,b]) {
+      assert.equal(await invoke(page,'open_new_window_cmd',{url:'https://example.com'}).then(()=>false,()=>true),true);
+      assert.equal(await invoke(page,'plugin:shell|open',{path:'https://example.com'}).then(()=>false,()=>true),true);
+    }
+    for(const url of ['javascript:alert(1)','file:///C:/test','omnia://auth/callback','https://user:pass@example.com','x'.repeat(8193)]) {
+      assert.equal(await invoke(a,'open_new_window_cmd',{url}).then(()=>false,()=>true),true);
+      assert.equal(await invoke(a,'plugin:shell|open',{path:url}).then(()=>false,()=>true),true);
+    }
+    assert.equal(await invoke(a,'plugin:shell|open',{path:'https://example.com',with:'cmd.exe'}).then(()=>false,()=>true),true);
+    for(const command of ['execute','spawn','kill','stdin_write']) {
+      assert.equal(await invoke(a,`plugin:shell|${command}`,{program:'cmd.exe',args:[],pid:0,buffer:'test'}).then(()=>false,()=>true),true);
+    }
+    assert.equal(await invoke(a,'auth_logout').then(()=>false,()=>true),true);
+    await a.reload();
+    await a.locator('#telegram-link').click();
+    await a.waitForFunction(()=>document.body.dataset.result==='ok');
+    for(const args of [{}, {url:42}, {url:{scheme:'https'}}]) {
+      assert.equal(await invoke(a,'open_new_window_cmd',args).then(()=>false,()=>true),true);
+    }
+    await invoke(a,'open_new_window_cmd',{url:'https://web.telegram.org/k/'});
+    await a.waitForURL('https://web.telegram.org/k/');
+    check('Telegram link works after reload; shell/other origins and invalid schemes denied; privileged auth remains denied');
+    check('Internal Telegram links stay in their route; malformed command payloads rejected');
+    check('Telegram external-link adapter rejects program selection and has no process execution commands');
   } else if(process.argv.includes('--gmail-popup-only')) {
     // The HTTP fixture opens a genuine native popup with opener/session sharing.
     // HTTPS responses below are intercepted; no Google accounts/network are used.

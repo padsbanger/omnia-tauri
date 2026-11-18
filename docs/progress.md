@@ -1,5 +1,73 @@
 # Progress record
 
+## Release 0.12.1 — 2026-11-18
+
+User confirmed live Telegram link opening on Windows and authorized the
+commit, push and GitHub release. Updated npm, Cargo and Tauri versions and
+lockfiles for the patch release. Local 0.12.1 checks passed lint, typecheck,
+135 frontend tests with coverage and CRAP8, 35 Rust tests, fmt, Clippy and
+the frontend build. The same runtime change previously passed Windows
+packaging and the native Telegram fixture. The release workflow builds
+versioned installers from tag 0.12.1 and attaches them after CI passes.
+
+## Telegram external-link correction — 2026-11-18
+
+User retry showed the initial fix below was incomplete. Inspected deployed
+Telegram `/a/assets/index-4r5-hDP6.js` and `dist-js-DvMJBKcV.js`, then pinned
+source `src/util/tauri/setupTauriListeners.ts` at
+293ede7b20390d04934f4beee6304c3560bbb5d6: same-origin links call
+`open_new_window_cmd`, but external links call `plugin:shell|open` with `path`.
+The first fixture incorrectly used the former for external links. Corrected it
+and reproduced `shell.open not allowed. Plugin not found` on native WebView2.
+
+Added an inline compatibility plugin named `shell` with ONLY an `open` handler,
+delegating to the existing Telegram origin/live-view/URL validation and route
+navigation policy. It does not install tauri-plugin-shell, execute commands,
+accept filesystem paths or honor the `with` program selector. Permission is
+restricted to web.telegram.org and route views; native checks exclude popups.
+The updated native fixture passes 11 checks, including denied execute/spawn/
+kill/stdin_write and program selection. Evidence:
+`docs/evidence/windows-telegram-external-links-before.json` and
+`docs/evidence/windows-telegram-external-links.json`. OS launch remains
+suppressed in the fixture; user confirmation is recorded below. Closed the running
+release app gracefully for rebuild/restart; no installed settings changed.
+Passed lint/typecheck, 135 frontend tests and coverage/CRAP8, 35 Rust tests,
+fmt/clippy, frontend/debug native builds, Node syntax and Git whitespace checks.
+`npm.cmd run native:build` exited 0 and produced Windows EXE/MSI/NSIS bundles.
+Relaunched the rebuilt release app with process-local OMNIA_NAVIGATION_TRACE=1
+to diagnose the user's next retry (bounded redacted local file only). No push,
+release or installation. User confirmed the real Telegram link opens in their
+browser after this restart. This is user-reported Windows provider verification;
+Linux/macOS runtime remains unverified.
+
+## Telegram links — 2026-11-18
+
+Reproduced Telegram Web A's Tauri-specific link invocation failing with
+`open_new_window_cmd not allowed. Command not found` in native Windows WebView2.
+Ordinary anchor/noreferrer links already passed; the initial blank-popup
+hypothesis was not the cause addressed by this fix. Telegram's source at
+293ede7b20390d04934f4beee6304c3560bbb5d6 detects Tauri and invokes its own desktop
+command. Added `telegram.rs` compatibility for only that command, exact HTTPS
+web.telegram.org origin, live route label (excluding popups/stale generations),
+bounded safe URL schemes and existing navigation policy. No shell/plugin grants
+or unrelated Telegram desktop commands were added. Reference Omnia checkout
+4c76ff5 remains unmodified.
+
+Passed lint/typecheck, 135 frontend tests (93.26% statement/88.01% branch
+coverage), same-run CRAP8, frontend build, 35 Rust tests, fmt/clippy and debug
+native build. `node scripts/native-smoke.mjs --links-only` passed ten native
+checks including a deterministic intercepted Telegram HTTPS page, exactly one
+external dispatch, reload, forbidden caller/scheme denial and privileged auth
+denial, internal navigation and malformed payload rejection. Before/after
+evidence: `docs/evidence/windows-telegram-links-before.json`
+and `windows-telegram-links.json`. OS browser launch is deliberately suppressed
+by smoke mode; this is not a live Telegram account or browser-launch test.
+`npm.cmd run native:build` passed (exit 0), producing the Windows executable,
+MSI and NSIS installers. Node syntax and `git diff --check` passed.
+Next: retry actual Telegram links in the
+rebuilt Windows app; Linux/macOS and live provider behavior remain unverified.
+No push, release, install or account change.
+
 ## Release 0.12.0 — 2026-11-14
 
 User authorized commit, push and GitHub release for the Vaultwarden integration.

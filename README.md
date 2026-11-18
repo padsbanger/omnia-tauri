@@ -31,11 +31,11 @@ npm.cmd run native:build
 
 Native outputs are under `src-tauri/target/release/`; Windows bundles are in `bundle/msi/` and `bundle/nsis/`. Builds do not install the app, register the `omnia:` protocol, change autostart, or publish anything. Unsigned packages require normal platform trust handling. Signing/notarization and updater infrastructure are optional and are not configured.
 
-CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.12.0, Linux downloads are separate `omnia-0.12.0-Linux-deb`, `omnia-0.12.0-Linux-rpm`, and `omnia-0.12.0-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.12.0-Windows` and `omnia-0.12.0-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the version and retain it when attached to releases.
+CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.12.1, Linux downloads are separate `omnia-0.12.1-Linux-deb`, `omnia-0.12.1-Linux-rpm`, and `omnia-0.12.1-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.12.1-Windows` and `omnia-0.12.1-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the version and retain it when attached to releases.
 
 Release builds use size optimization, ThinLTO, one codegen unit and symbol stripping, following [Tauri's size guidance](https://v2.tauri.app/concept/size/) and [Cargo's profiles reference](https://doc.rust-lang.org/cargo/reference/profiles.html). Panic unwinding is preserved. Development builds retain their normal debugging configuration. Release compilation can take longer, and stripped release binaries provide less detailed crash symbols; for diagnostic builds override `CARGO_PROFILE_RELEASE_STRIP=none` and `CARGO_PROFILE_RELEASE_DEBUG=1` in the build environment. Local before/after measurements are in [bundle size evidence](docs/evidence/linux-bundle-size.json).
 
-Current prepared version: **0.12.0**. See the [release notes](docs/releases/0.12.0.md).
+Current prepared version: **0.12.1**. See the [release notes](docs/releases/0.12.1.md).
 
 ## Release downloads
 
@@ -74,7 +74,7 @@ Run coverage before CRAP; CRAP reuses that coverage. Threshold is 8; normal appl
 - `security.rs`, `permissions.rs`, `unread.rs`, `platform.rs`: navigation, caller checks, Windows per-origin media/notification policy, unread arbitration, badges and autostart.
 - `downloads.rs`: hosted-page and popup downloads, safe collision handling, OS Downloads destinations and bounded shell status events.
 
-Tauri `2.12.4` explicitly enables its `unstable` multiwebview feature; `tauri-build 2.7.3`, Wry `0.57.0` and the resolved graph are locked. Child views are genuine native webviews, not iframes. The trusted shell alone receives management permissions, and every custom management command additionally validates its native caller label and local origin. Remote route capabilities expose only bounded unread/favicon hints whose identity is derived from the native view. Popups receive no management permissions. Authentication responses are processed in Rust, not globally broadcast as URL events.
+Tauri `2.12.4` explicitly enables its `unstable` multiwebview feature; `tauri-build 2.7.3`, Wry `0.57.0` and the resolved graph are locked. Child views are genuine native webviews, not iframes. The trusted shell alone receives management permissions, and every custom management command additionally validates its native caller label and local origin. Remote route capabilities expose bounded unread/favicon hints whose identity is derived from the native view. Telegram Web additionally receives narrow compatibility handlers for safe link navigation (including a URL-only inline adapter for its plugin:shell|open calls), checked against its HTTPS origin and exact live route label. Popups receive no management permissions. Authentication responses are processed in Rust, not globally broadcast as URL events.
 
 On Windows, drawers render in the transparent trusted shell, raised above the native route views. Websites remain visible and live beneath the translucent backdrop; closing the drawer restores website focus without recreating views. Linux/macOS retain the hide/show drawer path pending native compositing verification. All non-hibernated routes are retained, including background routes. Memory displays are omitted; no performance advantage is asserted.
 
@@ -169,7 +169,7 @@ Build machines need GStreamer base/good plugins and libav (`gst-plugins-base gst
 Verify the finished package, using a desktop or `xvfb-run -a dbus-run-session --` in CI:
 
 ```sh
-python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.12.0_amd64.AppImage"
+python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.12.1_amd64.AppImage"
 ```
 
 This requires Python 3, a C compiler, pkg-config and WebKitGTK/GStreamer development headers. It extracts into temporary storage, checks that required media elements resolve inside the package, then runs silent HTML audio and three Web Audio contexts with the bundled engine and launch hooks. It uses an ephemeral profile and isolated XDG paths. It does not test Telegram accounts, audible hardware output, calls or DRM. The graphics workaround above is a separate issue; use its explicit environment prefix if needed on the affected host.

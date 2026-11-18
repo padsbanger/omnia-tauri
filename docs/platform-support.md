@@ -1,5 +1,14 @@
 # Platform feasibility and provider verification
 
+Telegram links (2026-11-18): the Tauri-detection compatibility handlers are shared
+Rust code. Windows WebView2's intercepted HTTPS fixture passed link dispatch,
+reload and caller/URL denial checks; see
+[evidence](evidence/windows-telegram-external-links.json). This corrected fixture
+covers the external `plugin:shell|open` path missed by the initial fix.
+The user subsequently confirmed a real Telegram link opens in their browser
+on Windows. Linux/macOS runtime behavior remains unverified. The
+fixture suppresses external launching and does not log into Telegram.
+
 Vaultwarden autofill (2026-11-14): Rust crypto/transport and Tauri evaluation are
 platform-independent implementations, but only Windows WebView2 was exercised.
 The [native evidence](evidence/windows-vaultwarden.json) uses a synthetic encrypted

@@ -18,6 +18,7 @@ mod runtime;
 mod security;
 #[cfg(all(target_os = "linux", debug_assertions))]
 mod smoke_linux;
+mod telegram;
 mod unread;
 mod vault;
 mod window_state;
@@ -142,6 +143,7 @@ async fn smoke_download_fixture(
 async fn spike_seed(
     webview: tauri::Webview,
     state: tauri::State<'_, runtime::Native>,
+    service: Option<String>,
 ) -> Result<Vec<runtime::Route>, String> {
     security::trusted(&webview)?;
     if !cfg!(debug_assertions) || std::env::var_os("OMNIA_SMOKE").is_none() {
@@ -150,15 +152,19 @@ async fn spike_seed(
     let mut rt = state.0.lock().await;
     rt.owner = "native-fixture".into();
     rt.layout_revision = 0;
+    let service = service.as_deref().unwrap_or("gmail");
+    if !matches!(service, "gmail" | "telegram") {
+        return Err("Invalid fixture service".into());
+    }
     rt.routes = ["fixture-a", "fixture-b"]
         .iter()
         .map(|id| runtime::Route {
             id: (*id).into(),
             label: (*id).into(),
-            icon: "gmail".into(),
+            icon: service.into(),
             url: "http://127.0.0.1:7890/".into(),
             internal_hosts: {
-                let mut hosts = workspace::hosts("gmail", "https://mail.google.com");
+                let mut hosts = workspace::hosts(service, "http://127.0.0.1:7890/");
                 hosts.push("127.0.0.1".into());
                 hosts
             },
@@ -172,6 +178,7 @@ async fn spike_seed(
 }
 fn main() {
     tauri::Builder::default()
+        .plugin(telegram::link_plugin())
         .plugin(tauri_plugin_single_instance::init(|app, args, _| {
             auth::dispatch_callbacks(app, args);
             if let Some(w) = app.get_window("main") {
@@ -193,6 +200,7 @@ fn main() {
             runtime::unread_snapshot,
             runtime::page_signal,
             runtime::page_favicon,
+            telegram::open_new_window_cmd,
             auth::auth_login,
             auth::auth_cancel,
             workspace::auth_logout,

@@ -1,0 +1,147 @@
+{
+  "scope": "Native external link dispatch; OS browser launch suppressed in fixture mode",
+  "platform": "win32",
+  "started": "2026-11-18T21:16:24.903Z",
+  "checks": [
+    {
+      "name": "Normal window dimensions survive native close and restart",
+      "drawerOpen": false,
+      "maximized": false,
+      "minimized": false,
+      "pixels": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          49,
+          25,
+          15
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 700,
+        "width": 1000
+      },
+      "title": "Omnia Tauri",
+      "views": [],
+      "windowSize": {
+        "height": 700,
+        "width": 1000
+      }
+    },
+    {
+      "name": "Maximized window and full-size trusted shell survive native close and restart",
+      "drawerOpen": false,
+      "maximized": true,
+      "minimized": false,
+      "pixels": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ]
+      ],
+      "scale": 1,
+      "shellSize": {
+        "height": 1369,
+        "width": 2560
+      },
+      "title": "Omnia Tauri",
+      "views": [],
+      "windowSize": {
+        "height": 1369,
+        "width": 2560
+      }
+    },
+    {
+      "name": "Minimizing preserves maximized preference; unmaximize restores original bounds and persists",
+      "afterMinimize": {
+        "drawerOpen": false,
+        "maximized": true,
+        "minimized": false,
+        "pixels": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 1369,
+          "width": 2560
+        },
+        "title": "Omnia Tauri",
+        "views": [],
+        "windowSize": {
+          "height": 1369,
+          "width": 2560
+        }
+      },
+      "restored": {
+        "drawerOpen": false,
+        "maximized": false,
+        "minimized": false,
+        "pixels": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ]
+        ],
+        "scale": 1,
+        "shellSize": {
+          "height": 700,
+          "width": 1000
+        },
+        "title": "Omnia Tauri",
+        "views": [],
+        "windowSize": {
+          "height": 700,
+          "width": 1000
+        }
+      }
+    },
+    {
+      "name": "Native HTTP and blob downloads use collision-safe isolated destinations and report completion"
+    },
+    {
+      "name": "Native WebView2 file input and CDP file drop upload actual bytes over HTTP (OS drag interception requires Explorer check)"
+    },
+    {
+      "name": "anchor link dispatches to system browser without replacing route"
+    },
+    {
+      "name": "noreferrer link dispatches to system browser without replacing route"
+    },
+    {
+      "name": "Telegram Tauri-detection link path dispatches once without replacing Telegram"
+    },
+    {
+      "name": "Telegram link works after reload; shell/other origins and invalid schemes denied; privileged auth remains denied"
+    },
+    {
+      "name": "Internal Telegram links stay in their route; malformed command payloads rejected"
+    }
+  ],
+  "contractRequests": [],
+  "passed": true
+}

@@ -1,0 +1,8 @@
+{
+  "identifier": "telegram-links",
+  "description": "Telegram Web desktop-detection compatibility; native checks require an active route and safe link",
+  "webviews": ["route-*"],
+  "remote": { "urls": ["https://web.telegram.org/*"] },
+  "local": false,
+  "permissions": ["allow-open-new-window-cmd", "shell:allow-open"]
+}

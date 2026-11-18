@@ -1,5 +1,28 @@
 # Source parity and evidence
 
+Telegram links follow-up (2026-11-18): the first user retry failed; the initial
+fixture covered the wrong command for external links. The corrected
+[provider path](https://github.com/Ajaxy/telegram-tt/blob/293ede7b20390d04934f4beee6304c3560bbb5d6/src/util/tauri/setupTauriListeners.ts)
+uses `plugin:shell|open`. An inline plugin exposes ONLY its URL-opening handler,
+delegating to the same validated navigation policy; `with` program selection,
+filesystem paths and execution commands are rejected. No general shell plugin
+is installed. Corrected [failure](evidence/windows-telegram-external-links-before.json)
+and [passing native evidence](evidence/windows-telegram-external-links.json).
+Status: **implemented-and-tested** for Windows
+WebView2 fixture dispatch and user-confirmed live Telegram-to-browser handoff;
+**implemented-unverified** for other engines. Telegram Web A detects Tauri and calls its desktop command
+instead of ordinary navigation ([provider source](https://github.com/Ajaxy/telegram-tt/blob/293ede7b20390d04934f4beee6304c3560bbb5d6/src/util/tauri/initTauriApi.ts)).
+`src-tauri/src/telegram.rs` adapts these two link commands to the existing
+navigation/external-browser policy from reference `src/main/windows/index.ts`.
+Its capability is restricted to HTTPS web.telegram.org; Rust requires an exact
+live route label and validates the origin and URL. No popup, shell, arbitrary
+scheme or management access is added. Native failure and passing regression:
+[before](evidence/windows-telegram-links-before.json),
+[after](evidence/windows-telegram-links.json).
+Run `npm.cmd run smoke -- --links-only`; browser launching is suppressed by
+fixture mode. The user confirmed actual Telegram-to-browser handoff on Windows
+after the corrected build was restarted.
+
 Reference: `padsbanger/omnia`, default branch `main`, commit `4c76ff5bd8d574448ec2c99d890373a64059c287` (v0.11.0), fetched 2026-10-19. It matches the commit supplied in the task. Source paths below are relative to that read-only sibling checkout. This is a runtime migration, with reused MIT React/CSS/assets/domain tests, not an API recreation of the hosted websites.
 
 Status meanings: **implemented-and-tested** means the stated scope has actual local evidence; **implemented-unverified** means code exists but the stated runtime/provider case was not exercised; **unsupported** means the UI or documentation explicitly discloses the missing capability; **blocked** means a required external prerequisite prevents verification. Windows evidence does not imply Linux/macOS parity.
