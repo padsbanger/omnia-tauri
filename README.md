@@ -31,11 +31,11 @@ npm.cmd run native:build
 
 Native outputs are under `src-tauri/target/release/`; Windows bundles are in `bundle/msi/` and `bundle/nsis/`. Builds do not install the app, register the `omnia:` protocol, change autostart, or publish anything. Unsigned packages require normal platform trust handling. Signing/notarization and updater infrastructure are optional and are not configured.
 
-CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.12.1, Linux downloads are separate `omnia-0.12.1-Linux-deb`, `omnia-0.12.1-Linux-rpm`, and `omnia-0.12.1-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.12.1-Windows` and `omnia-0.12.1-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the version and retain it when attached to releases.
+CI uploads finished installers only. Every Actions artifact includes the version read from the checked-out app, including verification-only builds and native test evidence. For 0.12.2, Linux downloads are separate `omnia-0.12.2-Linux-deb`, `omnia-0.12.2-Linux-rpm`, and `omnia-0.12.2-Linux-AppImage` artifacts; Windows/macOS downloads are `omnia-0.12.2-Windows` and `omnia-0.12.2-macOS`. Choose one for your distribution. DEB/RPM use system WebKitGTK/GTK packages, while AppImage bundles these libraries and is consequently larger. Unpacked `AppDir` and package staging directories stay out of downloads. Windows retains MSI/NSIS installers; macOS uploads the DMG. Installer filenames already include the version and retain it when attached to releases.
 
 Release builds use size optimization, ThinLTO, one codegen unit and symbol stripping, following [Tauri's size guidance](https://v2.tauri.app/concept/size/) and [Cargo's profiles reference](https://doc.rust-lang.org/cargo/reference/profiles.html). Panic unwinding is preserved. Development builds retain their normal debugging configuration. Release compilation can take longer, and stripped release binaries provide less detailed crash symbols; for diagnostic builds override `CARGO_PROFILE_RELEASE_STRIP=none` and `CARGO_PROFILE_RELEASE_DEBUG=1` in the build environment. Local before/after measurements are in [bundle size evidence](docs/evidence/linux-bundle-size.json).
 
-Current prepared version: **0.12.1**. See the [release notes](docs/releases/0.12.1.md).
+Current prepared version: **0.12.2**. See the [release notes](docs/releases/0.12.2.md).
 
 ## Release downloads
 
@@ -89,7 +89,7 @@ Runtime environment overrides `config.json` in the app data root, which override
 | `OMNIA_API_BASE_URL` | `api_base_url` | `https://omnia.zaton.net` |
 | `AUTHENTIK_CLIENT_ID` | `client_id` | Source's public Omnia client ID |
 | `AUTHENTIK_REDIRECT_URI` | `redirect_uri` | `omnia://auth/callback` |
-| `AUTHENTIK_DISCOVERY_URL` | `discovery_url` | `https://auth.pripyat.cloud/application/o/omnia/.well-known/openid-configuration` |
+| `AUTHENTIK_DISCOVERY_URL` | `discovery_url` | `https://auth.zaton.net/application/o/omnia/.well-known/openid-configuration` |
 | — | `system_browser` | `false` |
 
 Example `config.json`:
@@ -97,7 +97,7 @@ Example `config.json`:
 ```json
 {
   "api_base_url": "https://omnia.zaton.net",
-  "discovery_url": "https://auth.pripyat.cloud/application/o/omnia/.well-known/openid-configuration",
+  "discovery_url": "https://auth.zaton.net/application/o/omnia/.well-known/openid-configuration",
   "redirect_uri": "omnia://auth/callback",
   "system_browser": false
 }
@@ -110,6 +110,8 @@ App identity is `com.strielok.omnia.tauri`. On Windows the data root is `%LOCALA
 The main window remembers its normal size and maximized state across normal close/restart, in `window-state.json` under that data root. Minimizing does not replace these preferences; start-at-login minimized still takes precedence. A forced process kill may lose changes since the previous normal exit. Missing or invalid preferences use the default 1200 × 800 window. Run `npm run smoke -- --window-only` for the focused Windows native restart regression; Linux/macOS restoration and mixed-monitor DPI remain unverified.
 
 ## Troubleshooting
+
+- If Omnia shows `Authentication HTTP 525` after the Authentik host move, check `AUTHENTIK_DISCOVERY_URL` and `discovery_url` in `config.json` for the old host. An older installed build can use the new discovery URL from the table above via `config.json`. Restart Omnia after changing it. The discovery URL scopes stored credentials and workspace profiles, so switching hosts requires signing in to Omnia again and selects a new local profile namespace.
 
 - Hosted-site browser handoffs can be diagnosed with `diagnostics/navigation.jsonl` under the app data root. Development builds enable this bounded local trace by default; set `OMNIA_NAVIGATION_TRACE=0` to disable it, or `OMNIA_NAVIGATION_TRACE=1` to enable it in a packaged build. It records native view identifiers, destination hosts, a few known Google login paths and navigation/popup decisions. Query strings, fragments, credentials and other paths are omitted. No trace is uploaded. On Windows development the file is `%LOCALAPPDATA%/com.strielok.omnia.tauri/development/diagnostics/navigation.jsonl`.
 - Gmail opening an external browser during sign-in: native traces identified missing YouTube and regional Google account hosts (`accounts.google.pl` in the reported flow). This build keeps verified Google account steps inside Google-enabled routes using a pinned list in `src/common/google_account_hosts.json`, derived from Google's official supported-domains list. Regional exceptions require exact hosts, HTTPS, port 443 and no embedded credentials; arbitrary `google.*` matches are not accepted. Actual Google account login still requires a user retry. Restart the app to reload the policy; clearing your route's session is unnecessary.
@@ -169,7 +171,7 @@ Build machines need GStreamer base/good plugins and libav (`gst-plugins-base gst
 Verify the finished package, using a desktop or `xvfb-run -a dbus-run-session --` in CI:
 
 ```sh
-python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.12.1_amd64.AppImage"
+python3 scripts/check-appimage-media.py "src-tauri/target/release/bundle/appimage/Omnia Tauri_0.12.2_amd64.AppImage"
 ```
 
 This requires Python 3, a C compiler, pkg-config and WebKitGTK/GStreamer development headers. It extracts into temporary storage, checks that required media elements resolve inside the package, then runs silent HTML audio and three Web Audio contexts with the bundled engine and launch hooks. It uses an ephemeral profile and isolated XDG paths. It does not test Telegram accounts, audible hardware output, calls or DRM. The graphics workaround above is a separate issue; use its explicit environment prefix if needed on the affected host.

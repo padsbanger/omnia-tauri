@@ -1,5 +1,29 @@
 # Progress record
 
+## Authentik hostname move (2026-11-20)
+
+Reproduced Cloudflare HTTP 525 on the old Omnia discovery URL. The
+`auth.zaton.net` discovery document returned HTTP 200 with the expected issuer,
+HTTPS endpoints and S256 support. The configured client, callback and PKCE
+parameters received a 302 to the Authentik sign-in flow, and the sign-in page
+returned HTTP 200. Updated the native default and README override instructions.
+The configured discovery URL scopes credentials and workspace profiles, so
+the new URL selects a new namespace. End-to-end account sign-in remains
+unverified.
+
+Windows checks passed for frontend lint, typecheck, build, 135 tests with
+coverage and CRAP8, plus 35 Rust tests, fmt and Clippy.
+The initial native build hit a running executable lock. After Omnia closed,
+`npm.cmd run native:build` produced the EXE, MSI and NSIS bundles. Verified
+the new URL in the release executable, reopened it, and observed its native
+sign-in window. No installer was run or published.
+
+Prepared patch version 0.12.2 in npm, Cargo, Tauri and both lockfiles.
+Rechecked the version fields, Git whitespace, frontend lint and typecheck,
+135 frontend tests with coverage and CRAP8, the frontend build, 35 Rust
+tests, fmt and Clippy. The published tag triggers installer builds and
+attachment on Windows, Linux and macOS through GitHub Actions.
+
 ## Release 0.12.1 — 2026-11-18
 
 User confirmed live Telegram link opening on Windows and authorized the

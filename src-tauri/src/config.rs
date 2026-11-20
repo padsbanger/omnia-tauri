@@ -16,8 +16,7 @@ impl Default for Config {
             client_id: "kSYcRwghR9ItrtPB5opL0lvWYPpFZfUtXFtzAv22".into(),
             redirect_uri: "omnia://auth/callback".into(),
             discovery_url:
-                "https://auth.pripyat.cloud/application/o/omnia/.well-known/openid-configuration"
-                    .into(),
+                "https://auth.zaton.net/application/o/omnia/.well-known/openid-configuration".into(),
             system_browser: false,
         }
     }
